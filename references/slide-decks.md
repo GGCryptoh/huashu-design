@@ -28,224 +28,224 @@ Building slide decks is a high-frequency design job. This doc explains how to do
 Every delivery starts from the same HTML aggregator (`index.html` + `slides/*.html`). The delivery format only changes the **HTML authoring constraints** and the **export command**:
 
 ```
-【永远默认 · 必做】 HTML 聚合演示版（index.html + slides/*.html）
+[ALWAYS DEFAULT · REQUIRED] HTML aggregator (index.html + slides/*.html)
    │
-   ├── 只要浏览器演讲 / 本地 HTML 存档   → 到这里已经完成，HTML 视觉自由度最大
+   ├── Browser presenting only / local HTML archive  → done at this point, max visual freedom
    │
-   ├── 还要 PDF（打印 / 发群 / 存档）     → 跑 export_deck_pdf.mjs 一键出
-   │                                          HTML 写法自由，视觉无约束
+   ├── Also need PDF (print / share / archive)        → run export_deck_pdf.mjs, one shot
+   │                                                     HTML authoring is free, no visual constraints
    │
-   └── 还要可编辑 PPTX（同事要改文字）    → 从第一行 HTML 就按 4 条硬约束写
-                                              跑 export_deck_pptx.mjs 一键出
-                                              牺牲渐变 / web component / 复杂 SVG
+   └── Also need editable PPTX (teammate edits text)  → write HTML against 4 hard constraints from line one
+                                                         run export_deck_pptx.mjs, one shot
+                                                         sacrifices gradients / web components / complex SVG
 ```
 
-### 开工话术（抄走即用）
+### Kickoff script (copy-paste ready)
 
-> 不管最后交付是 HTML、PDF 还是 PPTX，我都会先做一个可在浏览器里切换和演讲的 HTML 聚合版（`index.html` 加键盘翻页）——这是永远的默认基础产物。在此之上再问你要不要额外出 PDF / PPTX 的快照。
+> Whether the final delivery is HTML, PDF, or PPTX, I'll first build an HTML aggregator you can flip through and present in the browser (`index.html` with keyboard paging) — that's always the default base artifact. On top of that I'll ask whether you also need a PDF / PPTX snapshot.
 >
-> 你需要哪个导出格式？
-> - **只要 HTML**（演讲/存档）→ 视觉完全自由
-> - **还要 PDF** → 同上，加一条导出命令
-> - **还要可编辑 PPTX**（同事会在 PPT 里改文字）→ 我必须从第一行 HTML 就按 4 条硬约束写，会牺牲一些视觉能力（无渐变、无 web component、无复杂 SVG）。
+> Which export format do you need?
+> - **HTML only** (present/archive) → full visual freedom
+> - **Also PDF** → same as above, plus one export command
+> - **Also editable PPTX** (teammate edits text in PPT) → I must write HTML against 4 hard constraints from line one, sacrificing some visual capability (no gradients, no web components, no complex SVG).
 
-### 为什么「要 PPTX 就得从头走 4 条硬约束」
+### Why "if you want PPTX you must follow the 4 hard constraints from the start"
 
-PPTX 可编辑的前提是 `html2pptx.js` 能把 DOM 逐元素翻译为 PowerPoint 对象。它需要 **4 条硬约束**：
+PPTX editability depends on `html2pptx.js` translating the DOM element-by-element into PowerPoint objects. It needs **4 hard constraints**:
 
-1. body 固定 960pt × 540pt（匹配 `LAYOUT_WIDE`，13.333″ × 7.5″，不是 1920×1080px）
-2. 所有文字包在 `<p>`/`<h1>`-`<h6>` 里（禁止 div 直接放文字，禁止用 `<span>` 承载主文字）
-3. `<p>`/`<h*>` 自身不能有 background/border/shadow（放外层 div）
-4. `<div>` 不能用 `background-image`（用 `<img>` 标签）
-5. 不用 CSS gradient、不用 web component、不用复杂 SVG 装饰
+1. body fixed at 960pt × 540pt (matches `LAYOUT_WIDE`, 13.333″ × 7.5″, NOT 1920×1080px)
+2. All text wrapped in `<p>`/`<h1>`-`<h6>` (no bare text in div, no `<span>` carrying primary text)
+3. `<p>`/`<h*>` themselves cannot have background/border/shadow (move those to a wrapping div)
+4. `<div>` cannot use `background-image` (use an `<img>` tag)
+5. No CSS gradients, no web components, no complex decorative SVG
 
-**本 skill 默认的 HTML 视觉自由度高**——大量 span、嵌套 flex、复杂 SVG、web component（如 `<deck-stage>`）、CSS 渐变——**几乎没有一条能天然过 html2pptx 的约束**（实测视觉驱动的 HTML 直接上 html2pptx，pass 率 < 30%）。
+**This skill's default HTML enjoys high visual freedom** — heavy span use, nested flex, complex SVG, web components (like `<deck-stage>`), CSS gradients — **almost none of it naturally passes the html2pptx constraints** (in practice, throwing visual-driven HTML at html2pptx gives < 30% pass rate).
 
-### 两条真实路径的代价对比（2026-04-20 真实踩坑）
+### Two real paths, cost comparison (2026-04-20 real war story)
 
-| 路径 | 做法 | 结果 | 代价 |
-|------|------|------|------|
-| ❌ **先自由写 HTML，事后补救 PPTX** | 单文件 deck-stage + 大量 SVG/span 装饰 | 要可编辑 PPTX 只剩两条路：<br>A. 手写 pptxgenjs 几百行 hardcode 坐标<br>B. 重写 17 页 HTML 成 Path A 格式 | 2-3 小时返工，且手写版**维护成本永续**（HTML 改一个字，PPTX 要再人肉同步） |
-| ✅ **从第一步按 Path A 约束写** | 每页独立 HTML + 4 条硬约束 + 960×540pt | 一条命令导出 100% 可编辑 PPTX，同时也能浏览器全屏演讲（Path A HTML 就是浏览器可播放的标准 HTML） | 写 HTML 时多花 5 分钟想「文字怎么包进 `<p>`」，零返工 |
+| Path | Approach | Result | Cost |
+|------|----------|--------|------|
+| ❌ **Write HTML freely first, retrofit PPTX later** | Single-file deck-stage + heavy SVG/span decoration | To get editable PPTX, only two options remain:<br>A. Hand-write hundreds of lines of pptxgenjs with hardcoded coordinates<br>B. Rewrite all 17 HTML pages into Path A format | 2-3 hours of rework, and the hand-written version has **perpetual maintenance cost** (change one word in HTML, manually re-sync the PPTX) |
+| ✅ **Write to Path A constraints from step one** | One HTML per slide + 4 hard constraints + 960×540pt | One command produces 100% editable PPTX, and you can also fullscreen-present in the browser (Path A HTML is just standard browser-playable HTML) | Spend 5 extra minutes when writing HTML thinking "how does this text fit inside `<p>`", zero rework |
 
-### 混合交付怎么办
+### What about mixed delivery
 
-用户说「我要 HTML 演讲 **和** 可编辑 PPTX」——**这不是混合**，是 PPTX 需求覆盖 HTML 需求。按 Path A 写出来的 HTML 本身就能浏览器全屏演讲（加个 `deck_index.html` 拼接器就行）。**没有额外代价。**
+User says "I want HTML for presenting **and** editable PPTX" — **this isn't mixed**, the PPTX requirement subsumes the HTML one. HTML written to Path A is itself fullscreen-presentable in the browser (just add the `deck_index.html` aggregator). **No extra cost.**
 
-用户说「我要 PPTX **和** 动画 / web component」——**这是真矛盾**。告诉用户：要可编辑 PPTX 就得牺牲这些视觉能力。让他做取舍，不要偷偷做手写 pptxgenjs 方案（会变成永续维护债）。
+User says "I want PPTX **and** animations / web components" — **this is a real contradiction.** Tell the user: editable PPTX means giving up these visual capabilities. Make them choose, don't quietly resort to hand-writing pptxgenjs (that becomes a perpetual maintenance debt).
 
-### 事后才知道要 PPTX 怎么办（紧急补救）
+### What if you only learn PPTX is needed afterward (emergency fallback)
 
-极个别情况：HTML 已经写好了才发现要 PPTX。推荐走 **fallback 流程**（完整说明见 `references/editable-pptx.md` 末尾「Fallback：已有视觉稿但用户坚持要 editable PPTX」）：
+Rare case: HTML is already written and you only then discover PPTX is required. Use the **fallback flow** (full details in `references/editable-pptx.md`, "Fallback: existing visual draft but user insists on editable PPTX"):
 
-1. **首选：改出 PDF**（视觉 100% 保留，跨平台，接收方能看能印）—— 如果接收方实际需求是「演讲/存档」，PDF 就是最佳交付物
-2. **次选：AI 以视觉稿为蓝本，重写一版 editable HTML** → 导出 editable PPTX —— 保留色彩/布局/文案的设计决策，牺牲渐变、web component、复杂 SVG 等视觉能力
-3. **不推荐：手写 pptxgenjs 重建**——位置、字体、对齐都要手调，维护成本高，且后续 HTML 改一个字都得再人肉同步一次
+1. **First choice: ship a PDF instead** (100% visual fidelity, cross-platform, receiver can view and print) — if the receiver's real need is "presenting/archiving", PDF is the best delivery
+2. **Second choice: have AI rewrite an editable HTML using the visual draft as a blueprint** → export editable PPTX — preserves the color / layout / copy design decisions, sacrifices gradients, web components, complex SVG, etc.
+3. **Not recommended: rebuild via hand-written pptxgenjs** — every position, font, and alignment must be hand-tuned, maintenance cost is high, and every word change in HTML later requires another manual re-sync
 
-永远把选择告诉用户，让他决定。**永远不要第一反应就开始手写 pptxgenjs**——那是最后的兜底手段。
-
----
-
-## 🛑 批量制作前：先做 2 页 showcase 定 grammar
-
-**只要 deck ≥ 5 页，绝对不能从第 1 页直接写到最后一页。** 2026-04-22 moxt brochure 实战验证的正确顺序：
-
-1. 选 **2 个视觉差异最大的页面类型**先做 showcase（如「封面」+「情绪/引用页」，或「封面」+「产品展示页」）
-2. 截图让用户确认 grammar（masthead / 字体 / 色 / 间距 / 结构 / 中英双语比例）
-3. 方向通过了再批量推剩下 N-2 页，每页复用已建立的 grammar
-4. 全部完成后一起合成 HTML 聚合 + PDF / PPTX 衍生物
-
-**为什么**：直接写 13 页到底 → 用户说「方向不对」= 返工 13 次。先做 2 页 showcase → 方向错 = 返工 2 次。视觉 grammar 一旦确立，后续 N 页的决策空间大幅收窄，只剩「内容怎么放进去」。
-
-**showcase 页选择原则**：选视觉结构最不一样的两页。这两页过了 = 其他中间态都能过。
-
-| Deck 类型 | 推荐 showcase 页组合 |
-|-----------|---------------------|
-| B2B brochure / 产品宣发 | 封面 + 内容页（理念/情感页） |
-| 品牌发布 | 封面 + 产品特色页 |
-| 数据报告 | 数据大图页 + 分析结论页 |
-| 教程课件 | 章节封页 + 具体知识点页 |
+Always present the choices to the user and let them decide. **Never reflexively start hand-writing pptxgenjs** — that's the last-resort fallback.
 
 ---
 
-## 📐 出版物 grammar 模板（moxt 实测可复用）
+## 🛑 Before batch production: build a 2-page showcase to lock the grammar
 
-适合 B2B brochure / 产品宣发 / 长报告类 deck。每页复用这套结构 = 13 页视觉完全一致、0 返工。
+**As soon as the deck is ≥ 5 pages, never go straight from page 1 to the last page.** The right order, validated on the 2026-04-22 moxt brochure:
 
-### 每页骨架
+1. Pick **the 2 most visually different page types** and build them as a showcase first (e.g. "cover" + "emotion/quote page", or "cover" + "product showcase page")
+2. Screenshot and have the user confirm the grammar (masthead / fonts / color / spacing / structure / Chinese-English bilingual ratio)
+3. Once the direction is approved, batch out the remaining N-2 pages, each reusing the established grammar
+4. After everything is done, assemble the HTML aggregator + PDF / PPTX derivatives together
+
+**Why**: writing 13 pages straight through → user says "wrong direction" = 13 reworks. Doing a 2-page showcase first → wrong direction = 2 reworks. Once the visual grammar is locked, the decision space for the remaining N pages collapses to "how do I fit the content in".
+
+**Showcase page selection principle**: pick the two pages with the most different visual structure. If those two pass = every intermediate page also passes.
+
+| Deck type | Recommended showcase page pair |
+|-----------|--------------------------------|
+| B2B brochure / product launch | Cover + content page (philosophy/emotion page) |
+| Brand reveal | Cover + product feature page |
+| Data report | Big data chart page + analysis-conclusion page |
+| Tutorial / courseware | Chapter cover + a specific knowledge-point page |
+
+---
+
+## 📐 Publication grammar template (moxt-tested, reusable)
+
+Fits B2B brochure / product launch / long-report decks. Reuse this structure on every page = 13 pages visually consistent, zero rework.
+
+### Per-page skeleton
 
 ```
-┌─ masthead（顶部 strip + 横线）────────────┐
+┌─ masthead (top strip + horizontal rule)────┐
 │  [logo 22-28px] · A Product Brochure                Issue · Date · URL │
 ├──────────────────────────────────────────┤
 │                                          │
-│  ── kicker（绿色短横 + uppercase 标签）   │
-│  CHAPTER XX · SECTION NAME                 │
+│  ── kicker (green short bar + uppercase) │
+│  CHAPTER XX · SECTION NAME               │
 │                                          │
-│  H1（中文 Noto Serif SC 900）             │
-│  重点词单独上品牌主色                      │
+│  H1 (Chinese Noto Serif SC 900)          │
+│  Keyword in brand primary color          │
 │                                          │
-│  English subtitle (Lora italic，副标题)   │
-│  ─────────── 分隔线 ──────────            │
+│  English subtitle (Lora italic)          │
+│  ─────────── divider ──────────          │
 │                                          │
-│  [具体内容：双栏 60/40 / 2x2 grid / 列表] │
+│  [content: 60/40 two-col / 2x2 grid / list] │
 │                                          │
 ├──────────────────────────────────────────┤
 │ section name                     XX / total │
 └──────────────────────────────────────────┘
 ```
 
-### 样式约定（直接抄走）
+### Style conventions (copy-paste ready)
 
-- **H1**：中文 Noto Serif SC 900，字号 80-140px 看信息量，重点词单独上品牌主色（不要全文堆色）
-- **英文副**：Lora italic 26-46px，品牌签名词（如 "AI team"）粗体 + 主色斜体
-- **正文**：Noto Serif SC 17-21px，line-height 1.75-1.85
-- **accent 高亮**：正文里用主色加粗标注关键词，每页不超过 3 处（过多就失去锚点作用）
-- **背景**：暖米底 #FAFAFA + 极淡 radial-gradient noise（`rgba(33,33,33,0.015)`）增加纸感
+- **H1**: Chinese Noto Serif SC 900, size 80-140px depending on information density, keyword in brand primary color (don't pile color across the whole line)
+- **English sub**: Lora italic 26-46px, brand signature words (e.g. "AI team") bold + primary color italic
+- **Body**: Noto Serif SC 17-21px, line-height 1.75-1.85
+- **Accent highlight**: bold + primary color on keywords inside body text, max 3 per page (more and they lose their anchoring effect)
+- **Background**: warm beige #FAFAFA + very faint radial-gradient noise (`rgba(33,33,33,0.015)`) to add a paper feel
 
-### 视觉主角必须差异化
+### The visual protagonist must vary
 
-13 页如果全是「文字 + 一张截图」就太单调。**每页的视觉主角类型轮换**：
+If 13 pages are all "text + one screenshot", it's monotonous. **Rotate the visual-protagonist type each page**:
 
-| 视觉类型 | 适合的 section |
-|---------|---------------|
-| 封面排版（大字 + masthead + pillar） | 首页 / 篇章封 |
-| 单角色 portrait（超大单只 momo 等） | 介绍单个概念/角色 |
-| 多角色合影 / 头像卡并排 | 团队 / 用户案例 |
-| 时间轴卡片递进 | 展示「长期关系」「演进」 |
-| 知识图谱 / 连接节点图 | 展示「协作」「流动」 |
-| Before/After 对比卡 + 中间箭头 | 展示「改变」「差异」 |
-| 产品 UI 截图 + 描边设备框 | 具体功能展示 |
-| 大引号 big-quote（半页大字） | 情绪页 / 问题页 / 引文页 |
-| 真人头像 + 引言卡（2×2 或 1×4） | 用户见证 / 使用场景 |
-| 大字封底 + URL 椭圆按钮 | CTA / 结尾 |
-
----
-
-## ⚠️ 常见踩坑（moxt 实战总结）
-
-### 1. Emoji 在 Chromium / Playwright 导出时不渲染
-
-Chromium 默认不带彩色 emoji 字体，`page.pdf()` 或 `page.screenshot()` 时 emoji 显示为空方框。
-
-**对策**：用 Unicode 文字符号（`✦` `✓` `✕` `→` `·` `—`）替代，或直接改纯文字（「Email · 23」而不是「📧 23 emails」）。
-
-### 2. `export_deck_pdf.mjs` 报错 `Cannot find package 'playwright'`
-
-原因：ESM 模块解析从脚本所在位置向上找 `node_modules`。脚本在 `~/.claude/skills/huashu-design/scripts/`，那里没依赖。
-
-**对策**：把脚本复制到 deck 项目目录（例如 `brochure/build-pdf.mjs`），在项目根跑 `npm install playwright pdf-lib`，然后 `node build-pdf.mjs --slides slides --out output/deck.pdf`。
-
-### 3. Google Fonts 没加载完就截图 → 中文显示为系统默认黑体
-
-Playwright 截图/PDF 前至少 `wait-for-timeout=3500` 让 webfont 下载并 paint。或者把字体 self-host 到 `shared/fonts/` 减少网络依赖。
-
-### 4. 信息密度失衡：内容页塞太多
-
-moxt philosophy 页第一版用 2×2 = 4 段 + 底部 3 信条 = 7 块内容，挤压且重复。改成 1×3 = 3 段后呼吸感立刻回来。
-
-**对策**：每页控制在「1 个核心信息 + 3-4 个辅助点 + 1 个视觉主角」，超过就拆到新页。**少即是多**——观众一页看 10 秒，给他 1 个记忆点比 4 个记忆点更容易记住。
+| Visual type | Suited section |
+|-------------|----------------|
+| Cover typography (big type + masthead + pillar) | Title page / chapter cover |
+| Single-character portrait (one giant momo, etc.) | Introducing a single concept/character |
+| Group portrait / avatar cards in a row | Team / customer case |
+| Timeline cards in progression | Showing "long-term relationship" / "evolution" |
+| Knowledge graph / connected node diagram | Showing "collaboration" / "flow" |
+| Before/After comparison cards + center arrow | Showing "change" / "difference" |
+| Product UI screenshot + outlined device frame | Specific feature showcase |
+| Big-quote (half-page giant type) | Emotion page / problem page / quotation page |
+| Real avatar + quote card (2×2 or 1×4) | Customer testimonial / use case |
+| Big-type back cover + URL pill button | CTA / closing |
 
 ---
 
-## 🛑 先定架构：单文件 还是 多文件？
+## ⚠️ Common pitfalls (moxt war-story summary)
 
-**这个选择是做幻灯片的第一步，错了会反复踩坑。先读完这一节再动手。**
+### 1. Emoji don't render in Chromium / Playwright export
 
-### 两种架构对比
+Chromium has no color-emoji font by default, so `page.pdf()` or `page.screenshot()` shows emoji as empty boxes.
 
-| 维度 | 单文件 + `deck_stage.js` | **多文件 + `deck_index.html` 拼接器** |
-|------|--------------------------|--------------------------------------|
-| 代码结构 | 一个 HTML，所有 slide 是 `<section>` | 每页独立 HTML，`index.html` 用 iframe 拼接 |
-| CSS 作用域 | ❌ 全局，一页的样式可能影响所有页 | ✅ 天然隔离，iframe 各自一片天 |
-| 验证粒度 | ❌ 要 JS goTo 才能切到某页 | ✅ 单页文件双击就能在浏览器看 |
-| 并行开发 | ❌ 一个文件，多 agent 改会冲突 | ✅ 多 agent 可并行做不同页，零冲突 merge |
-| 调试难度 | ❌ 一处 CSS 出错，全 deck 翻车 | ✅ 一页出错只影响自己 |
-| 内嵌交互 | ✅ 跨页共享状态很简单 | 🟡 iframe 间需 postMessage |
-| 打印 PDF | ✅ 内置 | ✅ 拼接器 beforeprint 遍历 iframe |
-| 键盘导航 | ✅ 内置 | ✅ 拼接器内置 |
+**Fix**: substitute Unicode glyphs (`✦` `✓` `✕` `→` `·` `—`), or just go plain text ("Email · 23" instead of "📧 23 emails").
 
-### 选哪个？（决策树）
+### 2. `export_deck_pdf.mjs` errors with `Cannot find package 'playwright'`
 
-```
-│ 问：deck 预计有多少页？
-├── ≤10 页、需要 in-deck 动画或跨页交互、pitch deck → 单文件
-└── ≥10 页、学术讲座、课件、长 deck、多 agent 并行 → 多文件（推荐）
-```
+Cause: ESM module resolution walks up from the script's location looking for `node_modules`. The script lives at `~/.claude/skills/huashu-design/scripts/`, where there are no deps.
 
-**默认走多文件路径**。它不是「备选」，是**长 deck 和团队协作的主路径**。原因：单文件架构的每一个优势（键盘导航、打印、scale）多文件都有，而多文件的作用域隔离和可验证性是单文件补不回来的。
+**Fix**: copy the script into the deck project (e.g. `brochure/build-pdf.mjs`), run `npm install playwright pdf-lib` from the project root, then `node build-pdf.mjs --slides slides --out output/deck.pdf`.
 
-### 为什么这条规则这么硬？（真实事故记录）
+### 3. Screenshot fires before Google Fonts finish loading → Chinese text renders in the system default sans-serif
 
-单文件架构曾经在 AI心理学讲座 deck 制作中连踩四坑：
+Before Playwright screenshot/PDF, set at least `wait-for-timeout=3500` so the webfont downloads and paints. Or self-host fonts into `shared/fonts/` to reduce network dependency.
 
-1. **CSS 特异性覆盖**：`.emotion-slide { display: grid }` (特异性 10) 干翻 `deck-stage > section { display: none }` (特异性 2)，导致所有页同时渲染叠加。
-2. **Shadow DOM slot 规则被外层 CSS 压制**：`::slotted(section) { display: none }` 挡不住 outer rule 的覆盖，sections 不肯隐藏。
-3. **localStorage + hash 导航竞态**：刷新后不是跳到 hash 位置，而是停在 localStorage 记录的旧位置。
-4. **验证成本高**：必须 `page.evaluate(d => d.goTo(n))` 才能截某页，比直接 `goto(file://.../slides/05-X.html)` 慢一倍，还常报错。
+### 4. Information-density imbalance: content pages stuffed too tight
 
-全部根因是**单一全局命名空间**——多文件架构从物理层面把这些问题消除了。
+moxt philosophy page v1 had 2×2 = 4 paragraphs + 3 tenets at the bottom = 7 chunks of content, cramped and repetitive. Changed to 1×3 = 3 paragraphs and the breathing room came right back.
+
+**Fix**: keep each page to "1 core message + 3-4 supporting points + 1 visual protagonist"; if you exceed that, split into a new page. **Less is more** — the audience looks at one page for 10 seconds; one memorable point lands better than four.
 
 ---
 
-## 路径 A（默认）：多文件架构
+## 🛑 Pick the architecture first: single file or multi file?
 
-### 目录结构
+**This is the first decision when building a deck — get it wrong and you'll keep stepping on the same rakes. Read this section before doing anything.**
+
+### Architecture comparison
+
+| Dimension | Single file + `deck_stage.js` | **Multi file + `deck_index.html` aggregator** |
+|-----------|-------------------------------|-----------------------------------------------|
+| Code structure | One HTML, every slide is a `<section>` | One HTML per slide, `index.html` stitches them via iframe |
+| CSS scope | ❌ Global; one page's style can leak to all | ✅ Naturally isolated — every iframe is its own world |
+| Verification grain | ❌ Need a JS goTo to switch to a given page | ✅ Just double-click a single-page file to view in the browser |
+| Parallel development | ❌ One file, multiple agents conflict | ✅ Multiple agents work in parallel on different pages, zero merge conflicts |
+| Debug difficulty | ❌ One CSS bug breaks the whole deck | ✅ A broken page only affects itself |
+| Inline interactivity | ✅ Sharing state across pages is trivial | 🟡 iframes need postMessage |
+| Print to PDF | ✅ Built-in | ✅ Aggregator iterates iframes on beforeprint |
+| Keyboard navigation | ✅ Built-in | ✅ Built into the aggregator |
+
+### Which one? (decision tree)
 
 ```
-我的Deck/
-├── index.html              # 从 assets/deck_index.html 复制来，改 MANIFEST
+│ Q: how many pages will the deck have?
+├── ≤10 pages, needs in-deck animation or cross-page interaction, pitch deck → single file
+└── ≥10 pages, academic talk, courseware, long deck, multi-agent parallel work → multi file (recommended)
+```
+
+**Default to the multi-file path.** It's not a "backup" — it's the **main path for long decks and team collaboration**. Reason: every advantage of the single-file architecture (keyboard nav, print, scale) is also there in multi-file, while multi-file's scope isolation and verifiability are things single-file can't claw back.
+
+### Why is this rule so firm? (real-incident log)
+
+The single-file architecture once stepped on four rakes back-to-back during the AI-psychology talk deck:
+
+1. **CSS specificity override**: `.emotion-slide { display: grid }` (specificity 10) trampled `deck-stage > section { display: none }` (specificity 2), causing every page to render and stack at once.
+2. **Shadow DOM slot rule overridden by outer CSS**: `::slotted(section) { display: none }` couldn't beat the outer rule, so sections refused to hide.
+3. **localStorage + hash navigation race**: after refresh, instead of jumping to the hash, it stuck on the old localStorage-recorded position.
+4. **High verification cost**: had to `page.evaluate(d => d.goTo(n))` to screenshot a given page — twice as slow as `goto(file://.../slides/05-X.html)` and prone to errors.
+
+All root causes trace to **a single global namespace** — multi-file architecture eliminates these problems at the physical level.
+
+---
+
+## Path A (default): multi-file architecture
+
+### Directory structure
+
+```
+my-deck/
+├── index.html              # Copy from assets/deck_index.html, edit MANIFEST
 ├── shared/
-│   ├── tokens.css          # 共享设计 token（色板/字号/常用 chrome）
-│   └── fonts.html          # <link> 引入 Google Fonts（每页 include）
+│   ├── tokens.css          # Shared design tokens (palette / type scale / common chrome)
+│   └── fonts.html          # <link> for Google Fonts (each page includes)
 └── slides/
-    ├── 01-cover.html       # 每个文件都是完整 1920×1080 HTML
+    ├── 01-cover.html       # Each file is a complete 1920×1080 HTML
     ├── 02-agenda.html
     ├── 03-problem.html
     └── ...
 ```
 
-### 每张 slide 的模板骨架
+### Per-slide template skeleton
 
 ```html
 <!DOCTYPE html>
@@ -256,13 +256,13 @@ moxt philosophy 页第一版用 2×2 = 4 段 + 底部 3 信条 = 7 块内容，�
 <link href="https://fonts.googleapis.com/css2?family=..." rel="stylesheet">
 <link rel="stylesheet" href="../shared/tokens.css">
 <style>
-  /* 这一页独有的样式。用任何 class 名都不会污染别的页。*/
+  /* Styles unique to this page. Any class name you pick will never pollute another page. */
   body { padding: 120px; }
   .my-thing { ... }
 </style>
 </head>
 <body>
-  <!-- 1920×1080 的内容（由 body 的 width/height 在 tokens.css 里锁定）-->
+  <!-- 1920×1080 content (body width/height locked in tokens.css) -->
   <div class="page-header">...</div>
   <div>...</div>
   <div class="page-footer">...</div>
@@ -270,62 +270,62 @@ moxt philosophy 页第一版用 2×2 = 4 段 + 底部 3 信条 = 7 块内容，�
 </html>
 ```
 
-**关键约束**：
-- `<body>` 就是画布，直接在上面布局。不要包 `<section>` 或其他 wrapper。
-- `width: 1920px; height: 1080px` 由 `shared/tokens.css` 里的 `body` 规则锁定。
-- 引 `shared/tokens.css` 共享设计 token（色板、字号、page-header/footer 等）。
-- 字体 `<link>` 每页自己写（fonts 单独 import 不贵，且保证每页独立可打开）。
+**Key constraints**:
+- `<body>` is the canvas — lay things out directly on it. Don't wrap with a `<section>` or any other wrapper.
+- `width: 1920px; height: 1080px` is locked by the `body` rule in `shared/tokens.css`.
+- Pull in `shared/tokens.css` for shared design tokens (palette, type scale, page-header/footer, etc.).
+- Each page writes its own font `<link>` (font imports are cheap individually, and it guarantees each page opens standalone).
 
-### 拼接器：`deck_index.html`
+### Aggregator: `deck_index.html`
 
-**直接从 `assets/deck_index.html` 复制**。你只需要改一处——`window.DECK_MANIFEST` 数组，按顺序列出所有 slide 文件名和人类可读标签：
+**Copy it straight from `assets/deck_index.html`.** You only need to change one thing — the `window.DECK_MANIFEST` array, listing every slide filename in order with a human-readable label:
 
 ```js
 window.DECK_MANIFEST = [
-  { file: "slides/01-cover.html",    label: "封面" },
-  { file: "slides/02-agenda.html",   label: "目录" },
-  { file: "slides/03-problem.html",  label: "问题陈述" },
+  { file: "slides/01-cover.html",    label: "Cover" },
+  { file: "slides/02-agenda.html",   label: "Agenda" },
+  { file: "slides/03-problem.html",  label: "Problem statement" },
   // ...
 ];
 ```
 
-拼接器已内置：键盘导航（←/→/Home/End/数字键/P 打印）、scale + letterbox、右下计数器、localStorage 记忆、hash 跳页、打印模式（遍历 iframe 按页输出 PDF）。
+The aggregator ships with: keyboard navigation (←/→/Home/End/number keys/P for print), scale + letterbox, bottom-right counter, localStorage memory, hash-based jump, print mode (iterates iframes to emit per-page PDF).
 
-### 单页验证（这是多文件架构的杀手级优势）
+### Single-page verification (the multi-file architecture's killer feature)
 
-每张 slide 都是独立 HTML。**做完一张就在浏览器双击打开看**：
+Every slide is standalone HTML. **Finish a page, double-click it in the browser to look**:
 
 ```bash
 open slides/05-personas.html
 ```
 
-Playwright 截图也是直接 `goto(file://.../slides/05-personas.html)`，不需要 JS 跳页，也不会被别的页的 CSS 干扰。这让「改一点验一点」的工作流成本接近零。
+Playwright screenshots likewise just `goto(file://.../slides/05-personas.html)` — no JS paging needed, and no other page's CSS can interfere. This drives the "change a little, verify a little" workflow cost to near zero.
 
-### 并行开发
+### Parallel development
 
-把每张 slide 的任务拆给不同 agent，同时跑——HTML 文件彼此独立，merge 时没有冲突。长 deck 用这种并行方式能把制作时间压到 1/N。
+Hand each slide's task to a different agent and run them concurrently — the HTML files are mutually independent, so there are no merge conflicts. Long decks built in parallel like this can compress production time to 1/N.
 
-### `shared/tokens.css` 该放什么
+### What belongs in `shared/tokens.css`
 
-只放**真正跨页共用**的东西：
+Only **things that are genuinely shared across pages**:
 
-- CSS 变量（色板、字号阶、间距阶）
-- `body { width: 1920px; height: 1080px; }` 这样的 canvas 锁定
-- `.page-header` / `.page-footer` 这种每页都用一模一样的 chrome
+- CSS variables (palette, type scale, spacing scale)
+- Canvas locks like `body { width: 1920px; height: 1080px; }`
+- Chrome that's identical on every page, like `.page-header` / `.page-footer`
 
-**不要**把单页的布局 class 塞进来——那会退化回单文件架构的全局污染问题。
+**Don't** dump per-page layout classes in here — that regresses you to the single-file architecture's global pollution problem.
 
 ---
 
-## 路径 B（小 deck）：单文件 + `deck_stage.js`
+## Path B (small deck): single file + `deck_stage.js`
 
-适用于 ≤10 页、需要跨页共享状态（比如一个 React tweaks 面板要操控所有页）、或者做 pitch deck demo 这种要求极度紧凑的场景。
+Use this for ≤10 pages, when you need cross-page shared state (e.g. a React Tweaks panel that drives every page), or for an ultra-compact pitch-deck demo.
 
-### 基本用法
+### Basic usage
 
-1. 从 `assets/deck_stage.js` 读取内容，嵌入 HTML 的 `<script>`（或 `<script src="deck_stage.js">`）
-2. 在 body 里用 `<deck-stage>` 包 slide
-3. 🛑 **script 标签必须放在 `</deck-stage>` 之后**（见下方硬约束）
+1. Read the content of `assets/deck_stage.js` and embed it in the HTML `<script>` (or `<script src="deck_stage.js">`)
+2. Wrap slides in `<deck-stage>` inside body
+3. 🛑 **The script tag must come after `</deck-stage>`** (see hard constraint below)
 
 ```html
 <body>
@@ -339,90 +339,90 @@ Playwright 截图也是直接 `goto(file://.../slides/05-personas.html)`，不�
     </section>
   </deck-stage>
 
-  <!-- ✅ 正确：script 在 deck-stage 之后 -->
+  <!-- ✅ Correct: script is after deck-stage -->
   <script src="deck_stage.js"></script>
 
 </body>
 ```
 
-### 🛑 Script 位置硬约束（2026-04-20 真实踩坑）
+### 🛑 Script-position hard constraint (2026-04-20 real war story)
 
-**不能把 `<script src="deck_stage.js">` 放在 `<head>` 里。** 即使它在 `<head>` 里能定义 `customElements`，parser 在解析到 `<deck-stage>` 开始标签时就会触发 `connectedCallback`——此时子 `<section>` 还没被 parse，`_collectSlides()` 拿到空数组，counter 显示 `1 / 0`，所有页同时叠加渲染。
+**Don't put `<script src="deck_stage.js">` in `<head>`.** Even though placing it in `<head>` does define `customElements`, the parser fires `connectedCallback` the moment it hits the opening `<deck-stage>` tag — at which point the child `<section>` elements haven't been parsed yet, `_collectSlides()` gets an empty array, the counter shows `1 / 0`, and every page renders stacked at once.
 
-**三条合规写法**（任选其一）：
+**Three compliant patterns** (pick any one):
 
 ```html
-<!-- ✅ 最推荐：script 在 </deck-stage> 之后 -->
+<!-- ✅ Most recommended: script after </deck-stage> -->
 </deck-stage>
 <script src="deck_stage.js"></script>
 
-<!-- ✅ 也可：script 在 head 但加 defer -->
+<!-- ✅ Also fine: script in head with defer -->
 <head><script src="deck_stage.js" defer></script></head>
 
-<!-- ✅ 也可：module 脚本天然 defer -->
+<!-- ✅ Also fine: module scripts are naturally deferred -->
 <head><script src="deck_stage.js" type="module"></script></head>
 ```
 
-`deck_stage.js` 本身已内置 `DOMContentLoaded` 延迟收集防御，即使 script 放 head 也不会彻底炸掉——但 `defer` 或放 body 底部仍然是更干净的做法，避免依赖防御分支。
+`deck_stage.js` already ships with a `DOMContentLoaded` deferred-collection defense, so even script-in-head won't blow up entirely — but `defer` or placing it at the bottom of body is still the cleaner path; don't rely on the defensive branch.
 
-### ⚠️ 单文件架构的 CSS 陷阱（务必阅读）
+### ⚠️ The CSS trap of single-file architecture (must read)
 
-单文件架构最常见的坑——**`display` 属性被单页样式偷走**。
+The most common pitfall of single-file architecture — **the `display` property gets stolen by per-page styles**.
 
-常见错误姿势 1（直接写 display: flex 到 section）：
+Common wrong pattern 1 (writing display: flex directly on section):
 
 ```css
-/* ❌ 外部 CSS 特异性 2，覆盖了 shadow DOM 的 ::slotted(section){display:none}（也是 2）*/
+/* ❌ External CSS specificity 2 overrides shadow DOM's ::slotted(section){display:none} (also 2) */
 deck-stage > section {
-  display: flex;            /* 所有页会同时叠加渲染！ */
+  display: flex;            /* All pages render stacked at once! */
   flex-direction: column;
   padding: 80px;
   ...
 }
 ```
 
-常见错误姿势 2（section 有特异性更高的 class）：
+Common wrong pattern 2 (section has a higher-specificity class):
 
 ```css
-.emotion-slide { display: grid; }   /* 特异性: 10，更糟 */
+.emotion-slide { display: grid; }   /* Specificity: 10, even worse */
 ```
 
-两种都会让 **所有 slide 同时叠加渲染**——counter 可能显示 `1 / 10` 假装正常，但视觉上第一页盖着第二页盖着第三页。
+Both cause **every slide to render stacked at once** — the counter might show `1 / 10` and look normal, but visually page 1 is covering page 2 covering page 3.
 
-### ✅ Starter CSS（开工直接 copy，不踩坑）
+### ✅ Starter CSS (copy this verbatim, don't step on the rake)
 
-**section 自身**只管「可见/不可见」；**layout（flex/grid 等）写到 `.active` 上**：
+**The section itself** only handles "visible / not visible"; **layout (flex/grid, etc.) goes on `.active`**:
 
 ```css
-/* section 只定义非 display 的通用样式 */
+/* Section gets only non-display generic styles */
 deck-stage > section {
   background: var(--paper);
   padding: 80px 120px;
   overflow: hidden;
   position: relative;
-  /* ⚠️ 不要在这里写 display! */
+  /* ⚠️ Don't write display here! */
 }
 
-/* 锁死「非激活即隐藏」——特异性+权重双保险 */
+/* Lock "inactive = hidden" with both specificity and weight */
 deck-stage > section:not(.active) {
   display: none !important;
 }
 
-/* 激活页才写需要的 display + layout */
+/* Only the active page gets its display + layout */
 deck-stage > section.active {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-/* 打印模式：所有页都要显示，覆盖 :not(.active) */
+/* Print mode: every page must show, override :not(.active) */
 @media print {
   deck-stage > section { display: flex !important; }
   deck-stage > section:not(.active) { display: flex !important; }
 }
 ```
 
-替代方案：**把单页的 flex/grid 写到内部 wrapper `<div>` 上**，section 本身永远只是 `display: block/none` 的切换器。这是最干净的做法：
+Alternative: **put the per-page flex/grid on an inner wrapper `<div>`**, so the section itself is always nothing but a `display: block/none` switch. Cleanest approach:
 
 ```html
 <deck-stage>
@@ -432,11 +432,11 @@ deck-stage > section.active {
 </deck-stage>
 ```
 
-### 自定义尺寸
+### Custom dimensions
 
 ```html
 <deck-stage width="1080" height="1920">
-  <!-- 9:16 竖版 -->
+  <!-- 9:16 portrait -->
 </deck-stage>
 ```
 
@@ -444,161 +444,161 @@ deck-stage > section.active {
 
 ## Slide Labels
 
-Deck_stage 和 deck_index 都会给每页打标签（计数器显示）。给它们**更有意义**的 label：
+Both deck_stage and deck_index label every page (shown in the counter). Give them **meaningful** labels:
 
-**多文件**：在 `MANIFEST` 里写 `{ file, label: "04 问题陈述" }`
-**单文件**：在 section 上加 `<section data-screen-label="04 Problem Statement">`
+**Multi file**: in `MANIFEST` write `{ file, label: "04 Problem Statement" }`
+**Single file**: on the section add `<section data-screen-label="04 Problem Statement">`
 
-**关键：Slide 编号从 1 开始，不要从 0**。
+**Key: slide numbers start at 1, not 0.**
 
-用户说"slide 5"时，他指的是第 5 张，永远不是数组位置 `[4]`。人类不说 0-indexed。
+When the user says "slide 5", they mean the 5th slide, never array index `[4]`. Humans don't speak 0-indexed.
 
 ---
 
 ## Speaker Notes
 
-**默认不加**，只在用户明确要求时才加。
+**Off by default** — only add them when the user explicitly asks.
 
-加了 speaker notes 你就可以把 slide 上的文字减少到最小，focus on impactful visuals——notes 承载完整 script。
+Once you have speaker notes you can strip the slide text down to a minimum and focus on impactful visuals — the notes carry the full script.
 
-### 格式
+### Format
 
-**多文件**：在 `index.html` 的 `<head>` 里写：
+**Multi file**: write inside `index.html`'s `<head>`:
 
 ```html
 <script type="application/json" id="speaker-notes">
 [
-  "第1张的 script...",
-  "第2张的 script...",
+  "Script for slide 1...",
+  "Script for slide 2...",
   "..."
 ]
 </script>
 ```
 
-**单文件**：同上位置。
+**Single file**: same location.
 
-### Notes 写作要点
+### Notes-writing guidelines
 
-- **完整**：不是提纲，是真要讲的话
-- **对话式**：像平时说话，不是书面语
-- **对应**：数组第 N 个对应第 N 张 slide
-- **长度**：200-400 字最佳
-- **情绪线**：标注重音、停顿、强调点
+- **Complete**: it's not an outline, it's what you actually plan to say
+- **Conversational**: how you talk, not how you write
+- **Aligned**: array item N corresponds to slide N
+- **Length**: 200-400 characters works best
+- **Emotional beats**: mark stresses, pauses, and emphasis points
 
 ---
 
-## Slide 设计模式
+## Slide design patterns
 
-### 1. 建立一个系统（必做）
+### 1. Establish a system (mandatory)
 
-探索完 design context 后，**先口头说你要用的系统**：
+After exploring the design context, **state the system you'll use, out loud**:
 
 ```markdown
-Deck系统：
-- 背景色：最多2种（90% 白 + 10% 深色 section divider）
-- 字型：display 用 Instrument Serif，body 用 Geist Sans
-- 节奏：section divider 用 full-bleed 彩色 + 白字，普通 slide 白底
-- 图像：hero slide 用 full-bleed 照片，data slide 用 chart
+Deck system:
+- Backgrounds: at most 2 (90% white + 10% dark section divider)
+- Type: display in Instrument Serif, body in Geist Sans
+- Rhythm: section dividers are full-bleed color + white text; normal slides are white-on-white
+- Imagery: hero slides use full-bleed photos, data slides use charts
 
-我按这个系统做，有问题告诉我。
+I'll work to this system — flag anything off.
 ```
 
-用户确认后再往下做。
+Wait for the user to confirm before going further.
 
-### 2. 常用 slide layouts
+### 2. Common slide layouts
 
-- **Title slide**：纯色背景 + 巨大标题 + 副标题 + 作者/日期
-- **Section divider**：彩色背景 + 章节号 + 章节标题
-- **Content slide**：白底 + 标题 + 1-3 bullet points
-- **Data slide**：标题 + 大图表/数字 + 简短说明
-- **Image slide**：full-bleed 照片 + 底部小 caption
-- **Quote slide**：留白 + 巨大 quote + attribution
-- **Two-column**：左右对比（vs / before-after / problem-solution）
+- **Title slide**: solid background + giant title + subtitle + author/date
+- **Section divider**: colored background + chapter number + chapter title
+- **Content slide**: white background + title + 1-3 bullet points
+- **Data slide**: title + large chart/number + short caption
+- **Image slide**: full-bleed photo + small caption at the bottom
+- **Quote slide**: whitespace + giant quote + attribution
+- **Two-column**: left-right comparison (vs / before-after / problem-solution)
 
-一个 deck 里最多用 4-5 种 layout。
+Use at most 4-5 layouts in one deck.
 
-### 3. Scale（再次强调）
+### 3. Scale (saying it again)
 
-- 正文最小 **24px**，理想 28-36px
-- 标题 **60-120px**
-- Hero 字 **180-240px**
-- 幻灯片是给 10 米外看的，字要够大
+- Body min **24px**, ideal 28-36px
+- Titles **60-120px**
+- Hero type **180-240px**
+- Slides are read from 10 meters away — the type must be big enough
 
-### 4. 视觉节奏
+### 4. Visual rhythm
 
-Deck 需要 **intentional variety**：
+A deck needs **intentional variety**:
 
-- 颜色节奏：大部分白底 + 偶尔彩色 section divider + 偶尔 dark 片段
-- 密度节奏：几张 text-heavy 的 + 几张 image-heavy 的 + 几张 quote 留白
-- 字号节奏：正常标题 + 偶尔巨型 hero 文字
+- Color rhythm: mostly white-on-white + occasional colored section dividers + occasional dark passages
+- Density rhythm: a few text-heavy + a few image-heavy + a few whitespace-quote pages
+- Type-size rhythm: normal titles + occasional giant hero type
 
-**不要每张 slide 长一样**——那是 PPT 模板，不是设计。
+**Don't make every slide look the same** — that's a PPT template, not design.
 
-### 5. 空间呼吸（数据密集页必读）
+### 5. Spatial breathing (must read for data-dense pages)
 
-**新手最容易踩的坑**：把所有能放的信息都塞进一页。
+**The most common rookie mistake**: cramming every possible piece of info onto one page.
 
-信息密度 ≠ 有效信息传达。学术/演讲类 deck 尤其要克制：
+Information density ≠ effective information delivery. Academic/lecture decks especially demand restraint:
 
-- 列表/矩阵页：不要把 N 个元素都画成同一大小。用 **主次分层**——今天要聊的 5 个放大做主角，剩下 16 个缩小做背景 hint。
-- 大数字页：数字本身是视觉主角。周围的 caption 不要超过 3 行，否则观众眼球来回跳。
-- 引用页：引语和 attribution 之间要有留白隔开，不要贴在一起。
+- List/matrix pages: don't draw N elements all at the same size. Use **figure-ground hierarchy** — enlarge the 5 you're talking about today as the main act, shrink the remaining 16 as background hints.
+- Big-number pages: the number itself is the visual protagonist. Keep surrounding caption to under 3 lines or the audience's eyes ping-pong.
+- Quote pages: leave whitespace between the quote and the attribution; don't squish them together.
 
-对照「数据是不是主角」「文字有没有挤在一起」两条自我审查，改到留白让你有点不安为止。
-
----
-
-## 打印为 PDF
-
-**多文件**：`deck_index.html` 已处理 `beforeprint` 事件，按页输出 PDF。
-
-**单文件**：`deck_stage.js` 同样处理。
-
-打印样式已写好，不需要额外写 `@media print` CSS。
+Self-audit against two checks: "is the data the protagonist?" and "is the text crammed together?". Iterate until the whitespace makes you a little uneasy.
 
 ---
 
-## 导出为 PPTX / PDF（自助脚本）
+## Print to PDF
 
-HTML 优先是第一公民。但用户经常需要 PPTX/PDF 交付。提供两个通用脚本，**任何多文件 deck 都能用**，位于 `scripts/` 下：
+**Multi file**: `deck_index.html` already handles the `beforeprint` event and emits the PDF page-by-page.
 
-### `export_deck_pdf.mjs` — 导出矢量 PDF（多文件架构）
+**Single file**: `deck_stage.js` does the same.
+
+Print styles are wired up — you don't need to write extra `@media print` CSS.
+
+---
+
+## Export to PPTX / PDF (self-serve scripts)
+
+HTML is the first-class citizen. But users frequently need PPTX/PDF delivery. Two general-purpose scripts ship under `scripts/` and **work on any multi-file deck**:
+
+### `export_deck_pdf.mjs` — export a vector PDF (multi-file architecture)
 
 ```bash
 node scripts/export_deck_pdf.mjs --slides <slides-dir> --out deck.pdf
 ```
 
-**特点**：
-- 文字**保留矢量**（可复制、可搜索）
-- 视觉 100% 保真（Playwright 内嵌 Chromium 渲染后打印）
-- **不需要改 HTML 任何一个字**
-- 每个 slide 独立 `page.pdf()`，再用 `pdf-lib` 合并
+**Features**:
+- Text **stays vector** (selectable, searchable)
+- 100% visual fidelity (Playwright's bundled Chromium renders, then prints)
+- **No HTML changes required**
+- Each slide gets its own `page.pdf()`, then `pdf-lib` merges them
 
-**依赖**：`npm install playwright pdf-lib`
+**Dependencies**: `npm install playwright pdf-lib`
 
-**限制**：PDF 不能再编辑文字——要改回到 HTML 改。
+**Limitation**: text in PDF can't be edited — go back to HTML to change anything.
 
-### `export_deck_stage_pdf.mjs` — 单文件 deck-stage 架构专用 ⚠️
+### `export_deck_stage_pdf.mjs` — dedicated to single-file deck-stage architecture ⚠️
 
-**什么时候用**：deck 是单 HTML 文件 + `<deck-stage>` web component 包裹 N 个 `<section>`（即路径 B 架构）。此时 `export_deck_pdf.mjs` 那套「每个 HTML 一次 `page.pdf()`」走不通，需要走这个专用脚本。
+**When to use**: the deck is a single HTML + `<deck-stage>` web component wrapping N `<section>` (Path B architecture). The `export_deck_pdf.mjs` "one `page.pdf()` per HTML" approach doesn't work here, so use this dedicated script.
 
 ```bash
 node scripts/export_deck_stage_pdf.mjs --html deck.html --out deck.pdf
 ```
 
-**为什么不能复用 export_deck_pdf.mjs**（2026-04-20 真实踩坑记录）：
+**Why you can't reuse export_deck_pdf.mjs** (2026-04-20 real war story):
 
-1. **Shadow DOM 赢过 `!important`**：deck-stage 的 shadow CSS 里有 `::slotted(section) { display: none }`（只 active 的那张 `display: block`）。即使在 light DOM 用 `@media print { deck-stage > section { display: block !important } }` 也压不住——`page.pdf()` 触发 print 媒体后 Chromium 最终渲染只有 active 那一张，结果**整个 PDF 只有 1 页**（当前 active slide 的重复）。
+1. **Shadow DOM beats `!important`**: deck-stage's shadow CSS has `::slotted(section) { display: none }` (only the active one is `display: block`). Even if you write `@media print { deck-stage > section { display: block !important } }` in light DOM, you can't push past — once `page.pdf()` triggers print media, Chromium's final render only contains the active slide, so **the entire PDF is 1 page** (a duplicate of the current active slide).
 
-2. **循环 goto 每页还是只出 1 页**：直觉解法「对每个 `#slide-N` navigate 一次再 `page.pdf({pageRanges:'1'})`」也失败——因为 print CSS 在 shadow DOM 之外也有 `deck-stage > section { display: block }` 规则被 override 后，最终渲染永远是 section 列表的第一个（不是你 navigate 到的那一页）。结果 17 次循环得到 17 张 P01 封面。
+2. **Looping goto still emits only 1 page each**: the intuitive fix "navigate to each `#slide-N` then `page.pdf({pageRanges:'1'})`" also fails — because the outer-DOM `deck-stage > section { display: block }` print rule gets overridden, the final render is always the first item in the section list (not the page you navigated to). Result: 17 iterations, 17 copies of P01 cover.
 
-3. **absolute 子元素跑到下一页**：即使成功让所有 section 渲染出来，section 本身若 `position: static`，其 absolute 定位的 `cover-footer`/`slide-footer` 会相对 initial containing block 定位——当 section 被 print 强制为 1080px 高度，absolute footer 可能被推到下一页（表现为 PDF 比 section 数量多 1 页，多出来的那页只含 footer 孤儿）。
+3. **Absolute children spill to the next page**: even if you do get every section to render, when the section itself is `position: static`, its absolute-positioned `cover-footer`/`slide-footer` resolves against the initial containing block — when print forces the section to 1080px height, the absolute footer can be pushed onto the next page (manifests as PDF having 1 more page than there are sections, with that extra page being an orphaned footer).
 
-**修复策略**（脚本已实现）：
+**Fix strategy** (implemented in the script):
 
 ```js
-// 打开 HTML 后，用 page.evaluate 把 section 从 deck-stage slot 中提出来，
-// 直接挂到 body 下一个普通 div 里，并内联 style 确保 position:relative + 固定尺寸
+// After opening the HTML, use page.evaluate to lift sections out of the deck-stage slot,
+// drop them into a plain div directly under body, and inline-style them to position:relative + fixed size
 await page.evaluate(() => {
   const stage = document.querySelector('deck-stage');
   const sections = Array.from(stage.querySelectorAll(':scope > section'));
@@ -614,7 +614,7 @@ await page.evaluate(() => {
     s.style.cssText = 'width:1920px!important;height:1080px!important;display:block!important;position:relative!important;overflow:hidden!important;page-break-after:always!important;break-after:page!important;background:#F7F4EF;margin:0!important;padding:0!important;';
     container.appendChild(s);
   });
-  // 最后一页禁分页，避免尾部空白页
+  // Disable page-break on the last section to avoid a trailing blank page
   sections[sections.length - 1].style.pageBreakAfter = 'auto';
   sections[sections.length - 1].style.breakAfter = 'auto';
   document.body.appendChild(container);
@@ -623,104 +623,104 @@ await page.evaluate(() => {
 await page.pdf({ width: '1920px', height: '1080px', printBackground: true, preferCSSPageSize: true });
 ```
 
-**为什么这能 work**：
-- 把 section 从 shadow DOM slot 拔到 light DOM 的普通 div——彻底绕过 `::slotted(section) { display: none }` 规则
-- 内联 `position: relative` 让 absolute 子元素相对 section 定位，不会溢出
-- `page-break-after: always` 让浏览器 print 时每 section 独立一页
-- `:last-child` 不分页避免尾部空白页
+**Why this works**:
+- Lifting sections out of the shadow DOM slot into a plain light-DOM div completely bypasses the `::slotted(section) { display: none }` rule
+- Inline `position: relative` makes absolute children resolve against the section, no overflow
+- `page-break-after: always` gives every section its own page when the browser prints
+- The last child has page-break disabled to avoid a trailing blank page
 
-**用 `mdls -name kMDItemNumberOfPages` 验证时注意**：macOS 的 Spotlight metadata 有缓存，PDF 重写后要跑 `mdimport file.pdf` 强制刷新，否则显示旧的页数。用 `pdfinfo` 或 `pdftoppm` 数文件数才是真数。
+**A note on verifying with `mdls -name kMDItemNumberOfPages`**: macOS Spotlight metadata is cached — after rewriting a PDF, run `mdimport file.pdf` to force-refresh, otherwise it shows the old page count. The real count comes from `pdfinfo` or counting files via `pdftoppm`.
 
 ---
 
-### `export_deck_pptx.mjs` — 导出可编辑 PPTX
+### `export_deck_pptx.mjs` — export editable PPTX
 
 ```bash
-# 唯一模式：文本框原生可编辑（字体会回落到系统字体）
+# Only mode: text frames are natively editable (fonts fall back to system fonts)
 node scripts/export_deck_pptx.mjs --slides <dir> --out deck.pptx
 ```
 
-工作原理：`html2pptx` 逐元素读 computedStyle 把 DOM 翻译成 PowerPoint 对象（text frame / shape / picture）。文字变成真文本框，PPT 里双击即可编辑。
+How it works: `html2pptx` reads computedStyle element-by-element and translates the DOM into PowerPoint objects (text frame / shape / picture). Text becomes real text frames you can double-click to edit in PPT.
 
-**硬性约束**（HTML 必须满足，否则该页 skip，详细说明见 `references/editable-pptx.md`）：
-- 所有文字必须在 `<p>`/`<h1>`-`<h6>`/`<ul>`/`<ol>` 里（禁止裸文本 div）
-- `<p>`/`<h*>` 标签自身不能有 background/border/shadow（放外层 div）
-- 不用 `::before`/`::after` 插入装饰文字（伪元素提不出来）
-- inline 元素（span/em/strong）不能有 margin
-- 不用 CSS gradient（不可渲染）
-- div 不用 `background-image`（用 `<img>`）
+**Hard constraints** (the HTML must satisfy these or the page is skipped — full details in `references/editable-pptx.md`):
+- All text must live in `<p>`/`<h1>`-`<h6>`/`<ul>`/`<ol>` (no bare-text div)
+- `<p>`/`<h*>` themselves cannot have background/border/shadow (move them to an outer div)
+- No `::before`/`::after` for decorative text (pseudo-elements can't be lifted out)
+- Inline elements (span/em/strong) cannot have margin
+- No CSS gradients (can't be rendered)
+- div cannot use `background-image` (use `<img>`)
 
-脚本已内置**自动预处理器**——把 "叶子 div 里的裸文本" 自动包成 `<p>`（保留 class）。这解决了最常见的违规（裸文本）。但其他违规（p 上有 border、span 上有 margin 等）仍需 HTML 源头合规。
+The script ships with an **automatic preprocessor** — it wraps "bare text in a leaf div" as `<p>` automatically (preserving classes). This handles the most common violation (bare text). Other violations (border on p, margin on span, etc.) still need to be fixed at the HTML source.
 
-**字体回落 caveat**：
-- Playwright 用 webfont 测量 text-box 尺寸；PowerPoint/Keynote 用本机字体渲染
-- 两者不同时会有**溢出或错位**——每页都要肉眼过
-- 建议目标机器装好 HTML 里用的字体，或 fallback 到 `system-ui`
+**Font-fallback caveat**:
+- Playwright uses the webfont to measure text-box dimensions; PowerPoint/Keynote uses local fonts to render
+- When they differ you get **overflow or misalignment** — eyeball every page
+- Recommend installing the HTML-used fonts on the target machine, or fall back to `system-ui`
 
-**视觉优先场景不要走这条路径** → 改用 `export_deck_pdf.mjs` 出 PDF。PDF 视觉 100% 保真、矢量、跨平台、文字可搜——是视觉优先 deck 的真正归宿，不是什么「不可编辑的妥协」。
+**Don't use this path for visual-first decks** → use `export_deck_pdf.mjs` to ship a PDF. A PDF is 100% visually faithful, vector, cross-platform, text-searchable — that's the real home for visual-first decks, not some "non-editable compromise".
 
-### 从一开始就让 HTML 对导出友好
+### Make HTML export-friendly from day one
 
-对性能最稳的 deck：**从写 HTML 时就按 editable 的 4 条硬约束写**。这样 `export_deck_pptx.mjs` 可以直接全部 pass。额外成本不大：
+Most stable decks: **write HTML to the editable 4 hard constraints from the start.** Then `export_deck_pptx.mjs` passes everything cleanly. The extra cost is small:
 
 ```html
-<!-- ❌ 不好 -->
-<div class="title">关键发现</div>
+<!-- ❌ Bad -->
+<div class="title">Key finding</div>
 
-<!-- ✅ 好（p 包裹，class 继承） -->
-<p class="title">关键发现</p>
+<!-- ✅ Good (p wrapper, class carried over) -->
+<p class="title">Key finding</p>
 
-<!-- ❌ 不好（border 在 p 上） -->
+<!-- ❌ Bad (border on p) -->
 <p class="stat" style="border-left: 3px solid red;">41%</p>
 
-<!-- ✅ 好（border 在外层 div） -->
+<!-- ✅ Good (border on outer div) -->
 <div class="stat-wrap" style="border-left: 3px solid red;">
   <p class="stat">41%</p>
 </div>
 ```
 
-### 何时选哪个
+### When to use which
 
-| 场景 | 推荐 |
-|------|------|
-| 给主办方/档案存档 | **PDF**（通用、高保真、文字可搜） |
-| 发给协作者让他们微调文字 | **PPTX editable**（接受字体回落） |
-| 要现场演讲、不改内容 | **PDF**（矢量保真，跨平台） |
-| HTML 是首选呈现媒介 | 直接浏览器播放，导出只是备份 |
+| Scenario | Recommended |
+|----------|-------------|
+| For the host / archival storage | **PDF** (universal, high-fidelity, text-searchable) |
+| Sending to collaborators so they can tweak copy | **PPTX editable** (accept font fallback) |
+| Live presenting, no content edits | **PDF** (vector, faithful, cross-platform) |
+| HTML is the primary medium | Play in the browser — export is just a backup |
 
-## 导出为可编辑 PPTX 的深度路径（仅长期项目）
+## Deep path to editable PPTX (long-term projects only)
 
-如果你的 deck 会长期维护、反复修改、团队协作——建议**一开始就按 html2pptx 约束写 HTML**，这样 `export_deck_pptx.mjs` 可以直接全部 pass。详见 `references/editable-pptx.md`（4 条硬约束 + HTML 模板 + 常见错误速查 + 已有视觉稿的 fallback 流程）。
-
----
-
-## 常见问题
-
-**多文件：iframe 里的页打不开 / 白屏**
-→ 检查 `MANIFEST` 的 `file` 路径是否相对 `index.html` 正确。用浏览器 DevTools 看 iframe 的 src 能否直接访问。
-
-**多文件：某页样式和别页冲突**
-→ 不可能（iframe 隔离）。如果感觉冲突，那是缓存——Cmd+Shift+R 强刷。
-
-**单文件：多 slide 同时渲染叠加**
-→ CSS 特异性问题。看上面「单文件架构的 CSS 陷阱」一节。
-
-**单文件：缩放看起来不对**
-→ 检查是否所有 slide 直接挂在 `<deck-stage>` 下作为 `<section>`。中间不能包 `<div>`。
-
-**单文件：想跳到特定 slide**
-→ URL 加 hash：`index.html#slide-5` 跳到第 5 张。
-
-**两种架构都适用：字在不同屏幕下位置不一致**
-→ 用固定尺寸（1920×1080）和 `px` 单位，不要用 `vw`/`vh` 或 `%`。缩放统一处理。
+If your deck will be maintained long-term, edited repeatedly, and shared across a team — **write HTML to the html2pptx constraints from the start** so `export_deck_pptx.mjs` passes the lot. See `references/editable-pptx.md` (4 hard constraints + HTML templates + common-error reference + fallback flow when a visual draft already exists).
 
 ---
 
-## 验证检查清单（做完 deck 必过）
+## FAQ
 
-1. [ ] 浏览器直接打开 `index.html`（或主 HTML），检查首页无破图、字体已加载
-2. [ ] 按 → 键翻到每一页，没有空白页、没有布局错位
-3. [ ] 按 P 键打印预览，每页恰好一张 A4（或 1920×1080）且无裁切
-4. [ ] 随机选 3 页 Cmd+Shift+R 强刷，localStorage 记忆正常工作
-5. [ ] Playwright 批量截图（单页架构：遍历 `slides/*.html`；单文件架构：用 goTo 切换），人工肉眼过一遍
-6. [ ] 搜一下 `TODO` / `placeholder` 残留，确认都清理了
+**Multi file: a page in an iframe won't open / blank screen**
+→ Check whether the `MANIFEST` `file` path is correct relative to `index.html`. Use browser DevTools to confirm the iframe `src` opens directly.
+
+**Multi file: a page's styles seem to conflict with another page**
+→ Not possible (iframes are isolated). If it feels like a conflict, it's cache — Cmd+Shift+R for a hard refresh.
+
+**Single file: multiple slides stacked at once**
+→ CSS-specificity problem. See the "CSS trap of single-file architecture" section above.
+
+**Single file: scale looks wrong**
+→ Check that every slide hangs directly under `<deck-stage>` as a `<section>`. No `<div>` in between.
+
+**Single file: want to jump to a specific slide**
+→ Append a hash to the URL: `index.html#slide-5` jumps to slide 5.
+
+**Both architectures: text positions inconsistent across screens**
+→ Use fixed dimensions (1920×1080) and `px` units, not `vw`/`vh` or `%`. Let the scaling layer handle it uniformly.
+
+---
+
+## Verification checklist (must pass when the deck is done)
+
+1. [ ] Open `index.html` (or main HTML) directly in the browser — first page renders, no broken images, fonts loaded
+2. [ ] Press → through every page — no blank pages, no layout breakage
+3. [ ] Press P for print preview — each page is exactly one A4 (or 1920×1080), no clipping
+4. [ ] Pick 3 pages at random, Cmd+Shift+R hard-refresh — localStorage memory still works
+5. [ ] Batch screenshot with Playwright (multi-file: iterate `slides/*.html`; single-file: use goTo) and eyeball every page
+6. [ ] grep for any `TODO` / `placeholder` leftovers and confirm they're all cleaned up
