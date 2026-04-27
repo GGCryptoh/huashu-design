@@ -1,31 +1,31 @@
-# Slide Decks：HTML幻灯片制作规范
+# Slide Decks: HTML Slide Deck Spec
 
-做幻灯片是设计工作的高频场景。这份文档说明怎么做好HTML幻灯片——从架构选型、单页设计，到 PDF/PPTX 导出的完整路径。
+Building slide decks is a high-frequency design job. This doc explains how to do HTML slide decks well — from architecture choice and per-slide design through to the full PDF/PPTX export path.
 
-**本 skill 的能力覆盖**：
-- **HTML 演示版（基础产物，永远默认必做）** → 每页独立 HTML + `assets/deck_index.html` 聚合，浏览器里键盘翻页、全屏演讲
-- HTML → PDF 导出 → `scripts/export_deck_pdf.mjs` / `scripts/export_deck_stage_pdf.mjs`
-- HTML → 可编辑 PPTX 导出 → `references/editable-pptx.md` + `scripts/html2pptx.js` + `scripts/export_deck_pptx.mjs`（要求 HTML 按 4 条硬约束写）
+**What this skill covers**:
+- **HTML presentation (the base artifact, always the default, always required)** → one HTML per slide + `assets/deck_index.html` aggregator, keyboard paging in the browser, fullscreen presenting
+- HTML → PDF export → `scripts/export_deck_pdf.mjs` / `scripts/export_deck_stage_pdf.mjs`
+- HTML → editable PPTX export → `references/editable-pptx.md` + `scripts/html2pptx.js` + `scripts/export_deck_pptx.mjs` (requires HTML written against 4 hard constraints)
 
-> **⚠️ HTML 是基础，PDF/PPTX 是衍生物。** 不管最终交付什么格式，都**必须**先做 HTML 聚合演示版（`index.html` + `slides/*.html`），它是幻灯片作品的「源」。PDF/PPTX 是从 HTML 一行命令导出的快照。
+> **⚠️ HTML is the base, PDF/PPTX are derivatives.** Whatever the final delivery format, you **must** first build the HTML aggregator (`index.html` + `slides/*.html`) — that is the "source" of the slide deck. PDF/PPTX are one-command snapshots exported from the HTML.
 >
-> **为什么 HTML 优先**：
-> - 演讲/演示现场最好用（投影仪 / 共享屏幕直接全屏，键盘翻页，不依赖 Keynote/PPT 软件）
-> - 开发过程中每页可单独双击打开验证，不用每次重新跑导出
-> - 是 PDF/PPTX 导出的唯一上游（避免「导出后才发现要改 HTML 又要重出」的死循环）
-> - 交付物可以是「HTML + PDF」或「HTML + PPTX」双份，接收方爱用哪个用哪个
+> **Why HTML first**:
+> - Best for live presenting (projector / screen-share goes straight to fullscreen, keyboard paging, no dependency on Keynote/PPT software)
+> - During development each page can be opened standalone (just double-click) to verify, no need to re-run the export every time
+> - It's the only upstream for PDF/PPTX export (avoids the "exported then realized HTML needs changes, then re-export" death loop)
+> - Delivery can be "HTML + PDF" or "HTML + PPTX" as a pair — receiver picks whichever they prefer
 >
-> 2026-04-22 moxt brochure 实测：做完 13 页 HTML + index.html 聚合后，`export_deck_pdf.mjs` 一行导出 PDF，零改动。HTML 版本身就是可直接浏览器演讲的交付物。
+> 2026-04-22 moxt brochure verified: after building 13 HTML pages + the index.html aggregator, `export_deck_pdf.mjs` exported the PDF in one shot, zero changes needed. The HTML version is itself a deliverable you can present directly from the browser.
 
 ---
 
-## 🛑 开工前先确认交付格式（最硬的 checkpoint）
+## 🛑 Confirm the delivery format before starting (the hardest checkpoint)
 
-**这个决策比「单文件还是多文件」更先。** 2026-04-20 期权私董会项目实测：**不在动手前确认交付格式 = 2-3 小时返工。**
+**This decision comes before "single file vs multi file".** 2026-04-20 options private-board project verified: **not confirming delivery format before you start = 2-3 hours of rework.**
 
-### 决策树（HTML-first 架构）
+### Decision tree (HTML-first architecture)
 
-所有交付都从同一套 HTML 聚合页（`index.html` + `slides/*.html`）开始。交付格式只决定 **HTML 的写法约束** 和 **导出命令**：
+Every delivery starts from the same HTML aggregator (`index.html` + `slides/*.html`). The delivery format only changes the **HTML authoring constraints** and the **export command**:
 
 ```
 【永远默认 · 必做】 HTML 聚合演示版（index.html + slides/*.html）
