@@ -1,27 +1,28 @@
 /**
- * DesignCanvas — 变体并排网格布局
+ * DesignCanvas — side-by-side grid for design variations
  *
- * 用于展示2+个静态设计variations让用户对比选择。
- * 每个variation有label，可hover放大。
+ * Use it to show 2+ static design variations so the user can compare and pick.
+ * Each variation has a label, hover-to-zoom interaction.
  *
- * 用法：
+ * Usage:
  *   <DesignCanvas
- *     title="Hero区设计探索"
- *     subtitle="3个方向对比"
+ *     title="Hero exploration"
+ *     subtitle="3 directions side by side"
  *     columns={3}
  *   >
- *     <Variation label="Minimal" description="极简克制版">
- *       <div>...你的设计1...</div>
+ *     <Variation label="Minimal" description="Restrained minimal">
+ *       <div>...your design 1...</div>
  *     </Variation>
- *     <Variation label="Editorial" description="杂志编辑风">
- *       <div>...你的设计2...</div>
+ *     <Variation label="Editorial" description="Magazine-editorial">
+ *       <div>...your design 2...</div>
  *     </Variation>
- *     <Variation label="Brutalist" description="粗粝原始">
- *       <div>...你的设计3...</div>
+ *     <Variation label="Brutalist" description="Raw and brutalist">
+ *       <div>...your design 3...</div>
  *     </Variation>
  *   </DesignCanvas>
  *
- * 配合React+Babel使用。放在合适的script里，然后window.DesignCanvas/window.Variation可用。
+ * Pairs with React + Babel. Drop it into the right script tag and
+ * window.DesignCanvas / window.Variation become available.
  */
 
 const canvasStyles = {
@@ -29,7 +30,7 @@ const canvasStyles = {
     minHeight: '100vh',
     background: '#F5F5F0',
     padding: '40px 60px',
-    fontFamily: '-apple-system, "SF Pro Text", "PingFang SC", sans-serif',
+    fontFamily: '-apple-system, "SF Pro Text", sans-serif',
   },
   header: {
     marginBottom: 48,
