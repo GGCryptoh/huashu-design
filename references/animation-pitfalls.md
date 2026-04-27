@@ -314,120 +314,146 @@ document.fonts.ready.then(() => {
 window.__seek = (t) => { fired.clear(); time = t; lastTick = null; render(t); };
 ```
 
-**为什么这个模板对**：
+**Why this template is correct**:
 
-| 环节 | 为什么必须这样 |
+| Mechanism | Why it has to be this way |
 |------|-------------|
-| `lastTick = null` + 首帧 `return` | 避免「脚本加载到 tick 首次执行」的 L 秒被算进动画时间 |
-| `playing = false` 默认 | 字体加载期间 `tick` 即使运行也不推进 time，避免渲染错位 |
-| `__ready` 在 tick 首帧设 | 录屏脚本此刻开始计时，对应的画面是动画真正的 t=0 |
-| `document.fonts.ready.then(...)` 里才启动 tick | 规避字体 fallback 宽度测量、避免首帧字体跳变 |
-| `window.__seek` 存在 | 让 `render-video.js` 可以主动矫正——第二道防线 |
+| `lastTick = null` + first-frame `return` | Prevents the L seconds between "script loaded" and "tick first executed" from being counted into animation time |
+| `playing = false` by default | While fonts are loading, even if `tick` runs it doesn't advance time, avoiding render misalignment |
+| `__ready` set on tick's first frame | The recording script starts its clock here, and the corresponding frame is the animation's real t=0 |
+| Tick is only kicked off inside `document.fonts.ready.then(...)` | Avoids font-fallback width measurement and first-frame font-swap jumps |
+| `window.__seek` exists | Lets `render-video.js` proactively correct — a second line of defense |
 
-**录屏脚本端的对应防御**：
-1. `addInitScript` 注入 `window.__recording = true`（先于 page goto）
-2. `waitForFunction(() => window.__ready === true)`，记录此刻偏移作为 ffmpeg trim
-3. **额外**：`__ready` 之后主动 `page.evaluate(() => window.__seek && window.__seek(0))`，把 HTML 可能的 time 偏差强制归零——这是第二道防线，对付不严格遵守 starter 模板的 HTML
+**Corresponding defenses on the recording-script side**:
+1. `addInitScript` injects `window.__recording = true` (before page goto)
+2. `waitForFunction(() => window.__ready === true)`, record the offset at this moment as the ffmpeg trim
+3. **Extra**: after `__ready`, proactively call `page.evaluate(() => window.__seek && window.__seek(0))` to force any time drift in the HTML back to zero — second line of defense, for HTML that doesn't strictly follow the starter template
 
-**验证方法**：导出 MP4 后
+**Verification**: after exporting the MP4
 ```bash
 ffmpeg -i video.mp4 -ss 0 -vframes 1 frame-0.png
 ffmpeg -i video.mp4 -ss $DURATION-0.1 -vframes 1 frame-end.png
 ```
-首帧必须是动画 t=0 的初始状态（不是中段，不是黑），末帧必须是动画终态（不是第二轮 loop 的某个时刻）。
+The first frame must be the animation's initial state at t=0 (not a mid section, not black). The last frame must be the animation's final state (not some moment from a second loop).
 
-**参考实现**：`assets/animations.jsx` 的 Stage 组件、`scripts/render-video.js` 都已按此协议实现。手写 HTML 必须套 starter tick 模板——每一行都是防过具体 bug。
+**Reference implementation**: `assets/animations.jsx`'s Stage component and `scripts/render-video.js` both already implement this protocol. Hand-written HTML must apply the starter tick template — every line in it defends against a specific bug.
 
-## 13. 录制时禁止 loop —— `window.__recording` 信号
+## 13. No Looping During Recording — The `window.__recording` Signal
 
-**踩的坑**：动画 Stage 默认 `loop=true`（浏览器里方便看效果）。`render-video.js` 录完 duration 秒还多等 300ms 缓冲才停止，这 300ms 让 Stage 进入下一循环。ffmpeg `-t DURATION` 截取时，最后 0.5-1s 落入下一循环——视频结尾突然回到第一帧（Scene 1），观众以为视频出 bug。
+**The bug we hit**: Stage defaults to `loop=true` (handy in the browser for
+previewing). `render-video.js` waits an extra 300ms buffer after the duration
+finishes before stopping, and those 300ms let Stage roll into the next loop.
+When ffmpeg `-t DURATION` clipped, the last 0.5-1s fell into the next loop —
+the end of the video suddenly returned to the first frame (Scene 1) and the
+viewer thought the video was buggy.
 
-**根因**：录制脚本和 HTML 之间没有"我在录制"的握手协议。HTML 不知道自己被录，依然按浏览器交互场景循环。
+**Root cause**: there's no "I'm recording" handshake protocol between the
+recording script and the HTML. The HTML doesn't know it's being recorded, so
+it loops as if it were a browser interactive context.
 
-**规则**：
+**Rules**:
 
-1. **录制脚本**：在 `addInitScript` 里注入 `window.__recording = true`（先于 page goto）：
+1. **Recording script**: inject `window.__recording = true` via `addInitScript` (before page goto):
    ```js
    await recordCtx.addInitScript(() => { window.__recording = true; });
    ```
 
-2. **Stage 组件**：识别这个信号，强制 loop=false：
+2. **Stage component**: recognize this signal and force loop=false:
    ```js
    const effectiveLoop = (typeof window !== 'undefined' && window.__recording) ? false : loop;
    // ...
    if (next >= duration) return effectiveLoop ? 0 : duration - 0.001;
-   //                                                       ↑ 留 0.001 防止 Sprite end=duration 被关掉
+   //                                                       ↑ keep 0.001 so a Sprite with end=duration isn't turned off
    ```
 
-3. **结尾 Sprite 的 fadeOut**：录制场景下应设 `fadeOut={0}`，否则视频末尾会渐变到透明/暗色——用户期望停在清晰的最后一帧，不是淡出。手写 HTML 时建议结尾 Sprite 都用 `fadeOut={0}`。
+3. **The trailing Sprite's fadeOut**: when recording, set `fadeOut={0}` — otherwise the end of the video fades to transparent/dark, but the user expects to land on a clear final frame, not a fade-out. When hand-writing HTML, prefer `fadeOut={0}` for trailing Sprites.
 
-**参考实现**：`assets/animations.jsx` 的 Stage / `scripts/render-video.js` 都已内置握手。手写 Stage 必须实现 `__recording` 检测——否则录制必踩这个坑。
+**Reference implementation**: `assets/animations.jsx`'s Stage / `scripts/render-video.js` both have the handshake built in. A hand-written Stage must implement `__recording` detection — otherwise recording will hit this bug for sure.
 
-**验证**：导出 MP4 后 `ffmpeg -ss 19.8 -i video.mp4 -frames:v 1 end.png`，检查倒数 0.2 秒是否还是预期最后一帧，没有突然切换到另一个 scene。
+**Verification**: after exporting the MP4, `ffmpeg -ss 19.8 -i video.mp4 -frames:v 1 end.png`. Check whether the last 0.2 seconds is still the expected final frame, with no sudden switch to another scene.
 
-## 14. 60fps 视频默认用帧复制 —— minterpolate 兼容性差
+## 14. Default 60fps Should Use Frame Duplication — minterpolate Has Poor Compatibility
 
-**踩的坑**：`convert-formats.sh` 用 `minterpolate=fps=60:mi_mode=mci...` 生成的 60fps MP4，在 macOS QuickTime / Safari 部分版本下无法打开（一片黑或直接拒打）。VLC / Chrome 能打开。
+**The bug we hit**: 60fps MP4 produced by `convert-formats.sh` with
+`minterpolate=fps=60:mi_mode=mci...` couldn't be opened in some versions of
+macOS QuickTime / Safari (all black, or refused to open). VLC / Chrome could
+open it.
 
-**根因**：minterpolate 输出的 H.264 elementary stream 包含某些播放器解析有问题的 SEI / SPS 字段。
+**Root cause**: minterpolate's H.264 elementary stream output contains certain
+SEI / SPS fields that some players have trouble parsing.
 
-**规则**：
+**Rules**:
 
-- 默认 60fps 用简单 `fps=60` filter（帧复制），兼容性广（QuickTime/Safari/Chrome/VLC 都能开）
-- 高质量插帧用 `--minterpolate` flag 显式启用——但**必须本地测过**目标播放器再交付
-- 60fps 标签价值是**上传平台的算法识别**（Bilibili / YouTube 上 60fps 标记会优先推流），实际感知流畅度对 CSS 动画来说提升微弱
-- 加 `-profile:v high -level 4.0` 提升 H.264 通用兼容性
+- Default 60fps uses the simple `fps=60` filter (frame duplication) for broad compatibility (works on QuickTime/Safari/Chrome/VLC)
+- For high-quality interpolation, opt in explicitly with the `--minterpolate` flag — but **you must test the target players locally** before delivery
+- The value of the 60fps tag is **the platform's algorithmic recognition on upload** (Bilibili / YouTube prioritize the 60fps tag in distribution); actual perceived smoothness gains for CSS animation are minor
+- Add `-profile:v high -level 4.0` to improve H.264 universal compatibility
 
-**`convert-formats.sh` 已默认改成兼容模式**。如果你需要插帧高质量，加 `--minterpolate` flag：
+**`convert-formats.sh` now defaults to compatibility mode.** If you need
+high-quality interpolation, add the `--minterpolate` flag:
 ```bash
 bash convert-formats.sh input.mp4 --minterpolate
 ```
 
-## 15. `file://` + 外部 `.jsx` 的 CORS 陷阱 —— 单文件交付必须内联引擎
+## 15. The `file://` + External `.jsx` CORS Trap — Single-File Delivery Must Inline the Engine
 
-**踩的坑**：动画 HTML 里用 `<script type="text/babel" src="animations.jsx"></script>` 外部加载引擎。本机双击打开（`file://` 协议）→ Babel Standalone 走 XHR 拉 `.jsx` → Chrome 报 `Cross origin requests are only supported for protocol schemes: http, https, chrome, chrome-extension...` → 整页黑屏，不报 `pageerror` 只报 console error，很容易当"动画没触发"误诊。
+**The bug we hit**: the animation HTML loaded the engine externally with
+`<script type="text/babel" src="animations.jsx"></script>`. Open it locally by
+double-click (`file://` protocol) → Babel Standalone tries to XHR the `.jsx` →
+Chrome throws `Cross origin requests are only supported for protocol schemes:
+http, https, chrome, chrome-extension...` → entire page goes black. It doesn't
+fire `pageerror`, only a console error, and is easily misdiagnosed as
+"animation didn't trigger".
 
-启 HTTP server 也未必救得了——本机有全局代理时 `localhost` 也会走代理，返回 502 / 连接失败。
+Spinning up an HTTP server doesn't necessarily save you either — when there's a
+global proxy on the machine, `localhost` may also route through the proxy and
+come back as 502 / connection failed.
 
-**规则**：
+**Rules**:
 
-- **单文件交付（双击打开即用的 HTML）** → `animations.jsx` 必须**内联**到 `<script type="text/babel">...</script>` 标签内，不要用 `src="animations.jsx"`
-- **多文件项目（起 HTTP server 演示）** → 可以外部加载，但交付时明确写清 `python3 -m http.server 8000` 命令
-- 判断标准：交付给用户的是"HTML 文件"还是"带 server 的项目目录"？前者用内联
-- Stage 组件 / animations.jsx 经常 200+ 行——贴进 HTML `<script>` 块完全可接受，别怕体积
+- **Single-file delivery (HTML that works on double-click)** → `animations.jsx` must be **inlined** inside a `<script type="text/babel">...</script>` tag — don't use `src="animations.jsx"`
+- **Multi-file project (running an HTTP server for demo)** → external loading is fine, but spell out `python3 -m http.server 8000` clearly at delivery
+- Decision criterion: are you delivering "an HTML file" or "a project directory with a server"? The former uses inlining
+- The Stage component / animations.jsx is often 200+ lines — pasting it into an HTML `<script>` block is totally fine, don't worry about size
 
-**最小验证**：双击你生成的 HTML，**不要**通过任何 server 打开。如果 Stage 正常显示动画首帧，才算通过。
+**Minimal verification**: double-click the HTML you generated. **Do not** open it through any server. If Stage shows the animation's first frame correctly, it passes.
 
-## 16. 跨 scene 反色上下文 —— 画面内元素不要硬编码颜色
+## 16. Cross-Scene Inverted-Color Context — Don't Hardcode Colors on In-Frame Elements
 
-**踩的坑**：做多场景动画时，`ChapterLabel` / `SceneNumber` / `Watermark` 等**跨 scene 都出现**的元素，在组件里写死 `color: '#1A1A1A'`（深色文字）。前 4 个 scene 浅底 OK，到第 5 个黑底 scene 时"05"和水印直接消失——不报错、不触发任何检查、关键信息隐形。
+**The bug we hit**: in a multi-scene animation, elements that **appear across
+all scenes** like `ChapterLabel` / `SceneNumber` / `Watermark` had
+`color: '#1A1A1A'` (dark text) hardcoded inside the component. The first 4
+scenes had light backgrounds, fine. By scene 5 the background was black and
+"05" and the watermark just vanished — no error, no check tripped, key
+information invisible.
 
-**规则**：
+**Rules**:
 
-- **跨多 scene 复用的画面内元素**（chapter 标签 / scene 编号 / 时间码 / 水印 / 版权条）**禁止硬编码颜色值**
-- 改用三种方式之一：
-  1. **`currentColor` 继承**：元素只写 `color: currentColor`，父 scene 容器设 `color: 计算值`
-  2. **invert prop**：组件接受 `<ChapterLabel invert />` 手动切换深浅
-  3. **基于底色自动计算**：`color: contrast-color(var(--scene-bg))`（CSS 4 新 API，或 JS 判断）
-- 交付前用 Playwright 抽**每个 scene 的代表帧**，人眼过一遍"跨 scene 元素"是否都可见
+- **In-frame elements reused across multiple scenes** (chapter labels / scene numbers / timecodes / watermarks / copyright bars) **must not hardcode color values**
+- Use one of three approaches instead:
+  1. **`currentColor` inheritance**: the element only writes `color: currentColor`, and the parent scene container sets `color: <computed value>`
+  2. **invert prop**: the component accepts `<ChapterLabel invert />` to flip light/dark manually
+  3. **Auto-computed from background**: `color: contrast-color(var(--scene-bg))` (the new CSS 4 API, or judge in JS)
+- Before delivery, use Playwright to capture a **representative frame per scene** and eyeball whether the cross-scene elements are visible in all of them
 
-这条坑的隐蔽性在于——**没有 bug 报警**。只有人眼或 OCR 能发现。
+The insidiousness of this pitfall is that **there's no bug alarm**. Only the
+human eye (or OCR) can catch it.
 
-## 快速自查清单（开工前 5 秒）
+## Quick Self-Check Checklist (5 Seconds Before You Start)
 
-- [ ] 每个 `position: absolute` 的父元素都有 `position: relative`？
-- [ ] 动画里的特殊字符（`␣` `⌘` `emoji`）都在字体里存在？
-- [ ] Grid/Flex 模板的 count 和 JS 数据的 length 一致？
-- [ ] 场景切换之间有 cross-fade，没有 >0.3s 的纯空白？
-- [ ] DOM 测量代码包在 `document.fonts.ready.then()` 里？
-- [ ] `render(t)` 是 pure 的，或有明确的 reset 机制？
-- [ ] 第 0 帧是完整初始状态，不是空白？
-- [ ] 画面内没有「伪 chrome」装饰（进度条/时间码/底部署名条与 Stage scrubber 撞车）？
-- [ ] 动画 tick 第一帧同步设 `window.__ready = true`？（用 animations.jsx 自带；手写 HTML 自己加）
-- [ ] Stage 检测 `window.__recording` 强制 loop=false？（手写 HTML 必加）
-- [ ] 结尾 Sprite 的 `fadeOut` 设为 0（视频末尾停清晰帧）？
-- [ ] 60fps MP4 默认用帧复制模式（兼容性），高质量插帧才加 `--minterpolate`？
-- [ ] 导出后抽第 0 帧 + 末帧验证是动画初始/最终状态？
-- [ ] 涉及具体品牌（Stripe/Anthropic/Lovart/...）：走完了「品牌资产协议」（SKILL.md §1.a 五步）？有没有写 `brand-spec.md`？
-- [ ] 单文件交付的 HTML：`animations.jsx` 是内联的，不是 `src="..."`？（file:// 下 external .jsx 会 CORS 黑屏）
-- [ ] 跨 scene 出现的元素（chapter 标签/水印/scene 编号）没有硬编码颜色？在每个 scene 底色下都可见？
+- [ ] Does every parent of a `position: absolute` element have `position: relative`?
+- [ ] Do all special characters in the animation (`␣` `⌘` `emoji`) exist in the chosen typeface?
+- [ ] Does the Grid/Flex template count match the length of the JS data?
+- [ ] Are scene transitions cross-faded with no pure-blank gap >0.3s?
+- [ ] Is DOM measurement code wrapped in `document.fonts.ready.then()`?
+- [ ] Is `render(t)` pure, or does it have an explicit reset mechanism?
+- [ ] Is frame 0 the complete initial state, not blank?
+- [ ] No "fake chrome" decorations in the frame (progress bar / timecode / bottom byline colliding with the Stage scrubber)?
+- [ ] Does the animation tick set `window.__ready = true` synchronously on the first frame? (Built into animations.jsx; for hand-written HTML you add it yourself)
+- [ ] Does Stage detect `window.__recording` and force loop=false? (Mandatory for hand-written HTML)
+- [ ] Is the trailing Sprite's `fadeOut` set to 0 (so the video ends on a clear frame)?
+- [ ] Does the 60fps MP4 default to frame-duplication mode (compatibility), with `--minterpolate` only added for high-quality interpolation?
+- [ ] After export, did you sample frame 0 and the final frame to verify they are the animation's initial / final states?
+- [ ] When dealing with a specific brand (Stripe / Anthropic / Lovart / ...), did you complete the "Brand Asset Protocol" (SKILL.md §1.a, five steps)? Did you write `brand-spec.md`?
+- [ ] For single-file HTML delivery: is `animations.jsx` inlined, not `src="..."`? (External `.jsx` over file:// blackscreens via CORS)
+- [ ] Do elements that appear across scenes (chapter labels / watermarks / scene numbers) avoid hardcoded colors? Are they visible against each scene's background?
