@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geoff Hopkins — Design Style Showcase</title>
+
+<!--
+  ============================================================================
+  GEOFF HOPKINS · DESIGN STYLE SHOWCASE
+  ----------------------------------------------------------------------------
+  One set of content rendered in four design treatments from the
+  huashu-design style library. Use the floating switcher (or keys 1-4) to
+  toggle between versions. Choice persists via localStorage.
+
+  Views:
+    1. Swiss        Müller-Brockmann grid purism (black + Swiss red)
+    2. Hara         Kenya Hara "design of emptiness" (warm white, 80% space)
+    3. Editorial    Pentagram / IA magazine typography (serif display)
+    4. Cyber        Ash Thorp warm cyberpunk (dark, amber/teal, mono)
+
+  NOTE: All copy below is PLACEHOLDER. Geoffhopkins.com was unreachable from
+  the build sandbox, so the bio, projects, and links are invented and meant to
+  be edited. Search this file for "EDIT:" to find every spot to replace.
+  ============================================================================
+-->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..600&family=Cormorant+Garamond:ital,wght@0,300..600;1,300..500&family=Newsreader:opsz,wght@6..72,300..600&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@300..600&display=swap');
+
+/* ---------- reset ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body { min-height: 100vh; }
+img { display: block; max-width: 100%; }
+a { color: inherit; }
+p { text-wrap: pretty; }
+.view { display: none; }
+body[data-view="swiss"]     .view--swiss     ,
+body[data-view="hara"]      .view--hara      ,
+body[data-view="editorial"] .view--editorial ,
+body[data-view="cyber"]     .view--cyber     { display: block; animation: viewIn .5s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .view { animation: none !important; } }
+
+/* ============================================================ SWITCHER ===== */
+.switcher {
+  position: fixed; z-index: 999; top: 18px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px; border-radius: 999px;
+  background: rgba(18,18,20,.72); backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 8px 40px rgba(0,0,0,.35);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+.switcher__label {
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(255,255,255,.45); padding: 0 10px 0 8px; user-select: none;
+}
+.switcher button {
+  appearance: none; border: 0; cursor: pointer; color: rgba(255,255,255,.62);
+  background: transparent; font: inherit; font-size: 13px; font-weight: 500;
+  padding: 7px 15px; border-radius: 999px; transition: color .2s, background .2s;
+  display: flex; align-items: baseline; gap: 7px;
+}
+.switcher button:hover { color: #fff; }
+.switcher button .k { font-size: 9px; opacity: .5; font-variant-numeric: tabular-nums; }
+.switcher button[aria-pressed="true"] { color: #0c0c0d; background: #fff; }
+.switcher button[aria-pressed="true"] .k { opacity: .45; }
+@media (max-width: 620px) {
+  .switcher__label { display: none; }
+  .switcher button { padding: 7px 11px; font-size: 12px; }
+  .switcher button .k { display: none; }
+}
+
+/* placeholder ribbon */
+.ph-note {
+  position: fixed; z-index: 998; bottom: 14px; right: 14px; max-width: 280px;
+  font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 11px; line-height: 1.5;
+  color: rgba(255,255,255,.8); background: rgba(18,18,20,.7); backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.12);
+  padding: 11px 13px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.3);
+}
+.ph-note b { color: #fff; font-weight: 600; }
+.ph-note button { float: right; margin: -2px -3px 0 8px; background: none; border: 0;
+  color: rgba(255,255,255,.5); font-size: 15px; cursor: pointer; line-height: 1; }
+.ph-note button:hover { color: #fff; }
+.ph-note.hidden { display: none; }
+
+/* ====================================================================== */
+/* ==  VIEW 1 · SWISS — Müller-Brockmann grid purism                   == */
+/* ====================================================================== */
+.view--swiss {
+  --ink: #111; --paper: #fff; --red: #e2231a; --line: #e3e3e3; --mute: #6b6b6b;
+  background: var(--paper); color: var(--ink);
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Space Grotesk', sans-serif;
+  font-weight: 400; line-height: 1.5; padding: 86px 0 0;
+}
+.sw-wrap { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+.sw-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+.sw-rule { border-top: 2px solid var(--ink); margin: 0; }
+.sw-rule--thin { border-top: 1px solid var(--line); }
+
+.sw-masthead { padding: 8px 0 40px; }
+.sw-masthead .sw-rule { margin-bottom: 16px; }
+.sw-eyebrow { grid-column: 1 / 4; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.sw-eyebrow b { color: var(--red); }
+.sw-idx { grid-column: 12 / 13; text-align: right; font-size: 11px; letter-spacing: .14em; color: var(--mute); }
+
+.sw-hero { padding: 56px 0 64px; }
+.sw-hero h1 {
+  grid-column: 1 / 11; font-size: clamp(40px, 8.5vw, 116px); line-height: .94;
+  font-weight: 700; letter-spacing: -.02em;
+}
+.sw-hero h1 em { font-style: normal; color: var(--red); }
+.sw-hero .sw-sub { grid-column: 1 / 7; margin-top: 28px; font-size: 19px; line-height: 1.45; }
+.sw-hero .sw-meta { grid-column: 9 / 13; margin-top: 30px; font-size: 13px; color: var(--mute); }
+.sw-hero .sw-meta div { display: flex; justify-content: space-between; padding: 7px 0; border-top: 1px solid var(--line); }
+.sw-hero .sw-meta div:last-child { border-bottom: 1px solid var(--line); }
+.sw-hero .sw-meta span:last-child { color: var(--ink); }
+
+.sw-section { padding: 40px 0; }
+.sw-section > .sw-rule { margin-bottom: 28px; }
+.sw-h { grid-column: 1 / 4; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+.sw-h .n { color: var(--red); margin-right: 10px; }
+.sw-body { grid-column: 4 / 10; }
+.sw-body p { font-size: 17px; line-height: 1.6; max-width: 60ch; }
+.sw-body p + p { margin-top: 16px; }
+
+.sw-work { grid-column: 4 / 13; display: grid; gap: 0; }
+.sw-work .row {
+  display: grid; grid-template-columns: 1fr 2.4fr auto; gap: 24px; align-items: baseline;
+  padding: 20px 0; border-top: 1px solid var(--line);
+}
+.sw-work .row:last-child { border-bottom: 1px solid var(--line); }
+.sw-work .row .ttl { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+.sw-work .row .desc { color: var(--mute); font-size: 15px; }
+.sw-work .row .yr { font-variant-numeric: tabular-nums; color: var(--red); font-weight: 500; font-size: 14px; }
+
+.sw-foot { padding: 56px 0 64px; }
+.sw-foot .big { grid-column: 1 / 9; font-size: clamp(26px, 4vw, 46px); font-weight: 700; line-height: 1.05; letter-spacing: -.01em; }
+.sw-foot .big a { color: var(--red); text-decoration: none; }
+.sw-foot .big a:hover { text-decoration: underline; text-underline-offset: 6px; }
+.sw-foot .links { grid-column: 10 / 13; margin-top: 8px; font-size: 14px; }
+.sw-foot .links a { display: block; padding: 6px 0; text-decoration: none; border-top: 1px solid var(--line); }
+.sw-foot .links a:hover { color: var(--red); }
+
+/* ====================================================================== */
+/* ==  VIEW 2 · HARA — design of emptiness                             == */
+/* ====================================================================== */
+.view--hara {
+  --paper: #f4f1ea; --paper2: #faf8f3; --ink: #2c2924; --mute: #9a948a; --clay: #b29c86;
+  background: var(--paper); color: var(--ink);
+  font-family: 'Cormorant Garamond', 'Newsreader', Georgia, serif;
+  font-weight: 400; line-height: 1.7; letter-spacing: .01em;
+}
+.ha-wrap { max-width: 760px; margin: 0 auto; padding: 0 32px; }
+.ha-hero { min-height: 92vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.ha-hero .mark { font-size: 12px; letter-spacing: .42em; text-transform: uppercase; color: var(--mute); font-family: 'Space Grotesk', sans-serif; margin-bottom: 48px; }
+.ha-hero h1 { font-size: clamp(46px, 9vw, 104px); font-weight: 300; line-height: 1.04; letter-spacing: .005em; }
+.ha-hero h1 .light { color: var(--mute); font-style: italic; }
+.ha-hero .sub { margin-top: 40px; font-size: clamp(18px, 2.4vw, 23px); color: #56524b; max-width: 30ch; font-style: italic; }
+.ha-hero .scroll { margin-top: 72px; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--mute); font-family: 'Space Grotesk', sans-serif; }
+
+.ha-block { padding: 16vh 0; }
+.ha-block.center { text-align: center; }
+.ha-kicker { font-size: 11px; letter-spacing: .34em; text-transform: uppercase; color: var(--clay); font-family: 'Space Grotesk', sans-serif; margin-bottom: 36px; }
+.ha-block p.lead { font-size: clamp(21px, 3vw, 30px); font-weight: 300; line-height: 1.55; color: #43403a; max-width: 24ch; margin: 0 auto; }
+.ha-block p.body { font-size: 19px; line-height: 1.85; color: #56524b; max-width: 52ch; margin: 28px auto 0; }
+
+.ha-work { padding: 14vh 0; }
+.ha-work .item { padding: 46px 0; border-top: 1px solid #e3ddd1; text-align: center; }
+.ha-work .item:last-child { border-bottom: 1px solid #e3ddd1; }
+.ha-work .item .ttl { font-size: clamp(28px, 5vw, 46px); font-weight: 300; letter-spacing: .01em; }
+.ha-work .item .desc { font-size: 17px; color: var(--mute); margin-top: 12px; font-style: italic; }
+.ha-work .item .yr { font-size: 11px; letter-spacing: .3em; color: var(--clay); font-family: 'Space Grotesk', sans-serif; margin-top: 18px; }
+
+.ha-foot { padding: 18vh 0 16vh; text-align: center; }
+.ha-foot .q { font-size: clamp(26px, 4.5vw, 44px); font-weight: 300; font-style: italic; line-height: 1.4; color: #43403a; max-width: 22ch; margin: 0 auto 56px; }
+.ha-foot a { font-family: 'Space Grotesk', sans-serif; font-size: 13px; letter-spacing: .12em; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--clay); padding-bottom: 3px; }
+.ha-foot .links { margin-top: 40px; display: flex; gap: 30px; justify-content: center; }
+.ha-foot .links a { border: 0; font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--mute); }
+.ha-foot .links a:hover { color: var(--ink); }
+
+/* ====================================================================== */
+/* ==  VIEW 3 · EDITORIAL — Pentagram / magazine                       == */
+/* ====================================================================== */
+.view--editorial {
+  --paper: #f7f3ea; --ink: #1b1815; --accent: #9c1d1d; --mute: #7a736a; --line: #d8d0c2;
+  background: var(--paper); color: var(--ink);
+  font-family: 'Newsreader', Georgia, serif; line-height: 1.6;
+}
+.ed-wrap { max-width: 1140px; margin: 0 auto; padding: 0 40px; }
+.ed-mast { padding: 96px 0 18px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px double var(--ink); }
+.ed-mast .name { font-family: 'Playfair Display', serif; font-size: clamp(30px, 5vw, 58px); font-weight: 800; letter-spacing: -.01em; line-height: 1; }
+.ed-mast .issue { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--mute); text-align: right; font-family: 'Space Grotesk', sans-serif; }
+.ed-mast .issue b { color: var(--accent); }
+
+.ed-hero { padding: 64px 0 40px; border-bottom: 1px solid var(--line); }
+.ed-hero .tag { font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 22px; }
+.ed-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(42px, 8vw, 104px); font-weight: 800; line-height: .98; letter-spacing: -.015em; max-width: 16ch; }
+.ed-hero h1 em { font-style: italic; font-weight: 500; color: var(--accent); }
+.ed-hero .deck { margin-top: 30px; font-size: clamp(20px, 2.6vw, 27px); font-style: italic; color: #443f38; max-width: 44ch; }
+
+.ed-cols { padding: 50px 0; columns: 2; column-gap: 56px; }
+.ed-cols .kicker { font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); column-span: all; margin-bottom: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.ed-cols p { font-size: 17.5px; line-height: 1.66; margin-bottom: 16px; }
+.ed-cols p:first-of-type::first-letter {
+  font-family: 'Playfair Display', serif; float: left; font-size: 76px; line-height: .8;
+  font-weight: 800; padding: 6px 12px 0 0; color: var(--accent);
+}
+@media (max-width: 720px) { .ed-cols { columns: 1; } }
+
+.ed-pull { padding: 26px 0 44px; }
+.ed-pull blockquote { font-family: 'Playfair Display', serif; font-size: clamp(26px, 4.4vw, 44px); font-weight: 500; font-style: italic; line-height: 1.25; text-align: center; max-width: 22ch; margin: 0 auto; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); padding: 36px 0; }
+.ed-pull blockquote span { color: var(--accent); }
+
+.ed-work { padding: 30px 0 50px; }
+.ed-work h2 { font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 8px; }
+.ed-work .row { display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.ed-work .row .no { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.ed-work .row .ttl { font-family: 'Playfair Display', serif; font-size: clamp(22px, 3vw, 34px); font-weight: 700; }
+.ed-work .row .ttl small { display: block; font-family: 'Newsreader', serif; font-size: 16px; font-weight: 400; font-style: italic; color: var(--mute); margin-top: 4px; }
+.ed-work .row .yr { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
+
+.ed-foot { padding: 50px 0 90px; text-align: center; border-top: 3px double var(--ink); margin-top: 10px; }
+.ed-foot p { font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(24px, 4vw, 38px); margin-bottom: 22px; }
+.ed-foot a { color: var(--accent); }
+.ed-foot .links { font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.ed-foot .links a { text-decoration: none; margin: 0 12px; }
+.ed-foot .links a:hover { color: var(--ink); }
+
+/* ====================================================================== */
+/* ==  VIEW 4 · CYBER — Ash Thorp warm cyberpunk                       == */
+/* ====================================================================== */
+.view--cyber {
+  --bg: #0a0b0e; --panel: #111319; --ink: #e9e6df; --mute: #6f7787;
+  --amber: oklch(74% .16 56); --teal: oklch(80% .12 190); --line: #20242e;
+  background:
+    radial-gradient(900px 600px at 78% -5%, oklch(74% .16 56 / .14), transparent 60%),
+    radial-gradient(800px 700px at 10% 110%, oklch(80% .12 190 / .10), transparent 55%),
+    var(--bg);
+  color: var(--ink); font-family: 'JetBrains Mono', ui-monospace, monospace; line-height: 1.6;
+  position: relative;
+}
+.view--cyber::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 48px 48px; opacity: .35;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 40%, transparent 100%);
+}
+.cy-wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 36px; }
+.cy-top { display: flex; justify-content: space-between; align-items: center; padding: 26px 0; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--mute); border-bottom: 1px solid var(--line); }
+.cy-top .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal); margin-right: 9px; vertical-align: middle; }
+.cy-top b { color: var(--amber); }
+
+.cy-hero { padding: 96px 0 80px; }
+.cy-hero .tag { font-size: 12px; letter-spacing: .26em; text-transform: uppercase; color: var(--teal); margin-bottom: 26px; }
+.cy-hero .tag::before { content: "// "; color: var(--mute); }
+.cy-hero h1 {
+  font-family: 'Space Grotesk', sans-serif; font-size: clamp(44px, 9vw, 118px); font-weight: 600;
+  line-height: .96; letter-spacing: -.02em;
+}
+.cy-hero h1 .glow { color: var(--amber); text-shadow: 0 0 38px oklch(74% .16 56 / .55); }
+.cy-hero .sub { margin-top: 30px; max-width: 56ch; font-size: 15px; line-height: 1.8; color: #b7b9c2; }
+.cy-hero .stats { margin-top: 46px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 560px; }
+.cy-hero .stats .s { border: 1px solid var(--line); border-radius: 10px; padding: 18px; background: linear-gradient(180deg, rgba(255,255,255,.03), transparent); }
+.cy-hero .stats .s .n { font-family: 'Space Grotesk', sans-serif; font-size: 30px; color: var(--amber); font-weight: 600; }
+.cy-hero .stats .s .l { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin-top: 6px; }
+
+.cy-sec { padding: 30px 0; }
+.cy-sec .head { display: flex; align-items: center; gap: 14px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); margin-bottom: 26px; }
+.cy-sec .head::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+.cy-sec .head b { color: var(--teal); }
+.cy-about p { max-width: 64ch; font-size: 15px; line-height: 1.9; color: #c5c7d0; }
+.cy-about p + p { margin-top: 16px; }
+
+.cy-work { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 760px) { .cy-work { grid-template-columns: 1fr; } }
+.cy-work .card {
+  border: 1px solid var(--line); border-radius: 12px; padding: 22px; background: var(--panel);
+  position: relative; overflow: hidden; transition: border-color .25s, transform .25s;
+}
+.cy-work .card:hover { border-color: oklch(74% .16 56 / .55); transform: translateY(-3px); }
+.cy-work .card::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, var(--amber), var(--teal)); opacity: .7; }
+.cy-work .card .no { font-size: 11px; color: var(--teal); letter-spacing: .12em; }
+.cy-work .card .ttl { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 600; margin: 14px 0 8px; }
+.cy-work .card .desc { font-size: 13px; line-height: 1.7; color: var(--mute); }
+.cy-work .card .yr { margin-top: 18px; font-size: 11px; color: var(--amber); letter-spacing: .1em; }
+
+.cy-foot { padding: 80px 0 96px; text-align: center; }
+.cy-foot .big { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 5vw, 56px); font-weight: 600; letter-spacing: -.01em; }
+.cy-foot .big a { color: var(--amber); text-decoration: none; text-shadow: 0 0 30px oklch(74% .16 56 / .5); }
+.cy-foot .links { margin-top: 30px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.cy-foot .links a { text-decoration: none; margin: 0 12px; }
+.cy-foot .links a:hover { color: var(--teal); }
+</style>
+</head>
+<body data-view="swiss">
+
+<!-- ===================== VIEW SWITCHER ===================== -->
+<nav class="switcher" role="tablist" aria-label="Design style">
+  <span class="switcher__label">View</span>
+  <button data-go="swiss"     aria-pressed="true"  role="tab">Swiss <span class="k">1</span></button>
+  <button data-go="hara"      aria-pressed="false" role="tab">Hara <span class="k">2</span></button>
+  <button data-go="editorial" aria-pressed="false" role="tab">Editorial <span class="k">3</span></button>
+  <button data-go="cyber"     aria-pressed="false" role="tab">Cyber <span class="k">4</span></button>
+</nav>
+
+<!-- ===================== VIEW 1 · SWISS ===================== -->
+<section class="view view--swiss">
+  <div class="sw-wrap">
+    <div class="sw-masthead">
+      <div class="sw-rule"></div>
+      <div class="sw-grid">
+        <!-- EDIT: name / role -->
+        <div class="sw-eyebrow"><b>GH</b> — Geoff Hopkins</div>
+        <div class="sw-idx">Portfolio / 2026</div>
+      </div>
+    </div>
+
+    <div class="sw-hero sw-grid">
+      <!-- EDIT: headline -->
+      <h1>Engineer.<br>Builder.<br><em>Shipping.</em></h1>
+      <p class="sw-sub">I design and build software products end to end — from the first sketch to the version people actually use.</p>
+      <div class="sw-meta">
+        <div><span>Based in</span><span>London, UK</span></div>
+        <div><span>Focus</span><span>Product &amp; Systems</span></div>
+        <div><span>Status</span><span>Open to projects</span></div>
+      </div>
+    </div>
+
+    <div class="sw-section">
+      <div class="sw-rule sw-rule--thin"></div>
+      <div class="sw-grid">
+        <div class="sw-h"><span class="n">01</span>About</div>
+        <div class="sw-body">
+          <!-- EDIT: bio -->
+          <p>For the past decade I've worked at the seam between engineering and design — the place where a clear idea either survives contact with real constraints or quietly falls apart. I tend to build the smallest honest version first, then sharpen.</p>
+          <p>My work spans developer tooling, fintech, and consumer products. The common thread is a bias toward clarity: fewer moving parts, sharper defaults, interfaces that explain themselves.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sw-section">
+      <div class="sw-rule sw-rule--thin"></div>
+      <div class="sw-grid">
+        <div class="sw-h"><span class="n">02</span>Selected Work</div>
+        <div class="sw-work">
+          <!-- EDIT: projects -->
+          <div class="row"><span class="ttl">Ledger</span><span class="desc">Real-time reconciliation engine for small finance teams.</span><span class="yr">2025</span></div>
+          <div class="row"><span class="ttl">Atlas</span><span class="desc">A CLI and dashboard that maps service dependencies as you deploy.</span><span class="yr">2024</span></div>
+          <div class="row"><span class="ttl">Quiet</span><span class="desc">A focus app with no streaks, no badges, no guilt.</span><span class="yr">2023</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sw-foot">
+      <div class="sw-rule"></div>
+      <div class="sw-grid" style="margin-top:24px">
+        <!-- EDIT: contact -->
+        <div class="big">Have something worth building?<br><a href="mailto:geoff@geoffhopkins.com">geoff@geoffhopkins.com</a></div>
+        <div class="links">
+          <a href="#">X / Twitter →</a>
+          <a href="#">GitHub →</a>
+          <a href="#">LinkedIn →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VIEW 2 · HARA ===================== -->
+<section class="view view--hara">
+  <div class="ha-wrap">
+    <header class="ha-hero">
+      <div class="mark">Geoff Hopkins</div>
+      <!-- EDIT: headline -->
+      <h1>Less,<br>but <span class="light">better.</span></h1>
+      <p class="sub">Software made quiet enough to disappear.</p>
+      <div class="scroll">Scroll</div>
+    </header>
+
+    <section class="ha-block center">
+      <div class="ha-kicker">About</div>
+      <!-- EDIT: bio -->
+      <p class="lead">I build things by removing everything that isn't essential.</p>
+      <p class="body">A decade of engineering taught me that the hardest work is subtraction — finding the one idea a product is really about and clearing space around it until it can breathe. I work across developer tools, finance, and consumer software, but the practice is always the same: empty the frame, then place a single thing with care.</p>
+    </section>
+
+    <section class="ha-work ha-wrap" style="padding-left:0;padding-right:0">
+      <div class="ha-kicker center" style="text-align:center">Selected Work</div>
+      <!-- EDIT: projects -->
+      <div class="item"><div class="ttl">Ledger</div><div class="desc">Reconciliation, made calm.</div><div class="yr">2025</div></div>
+      <div class="item"><div class="ttl">Atlas</div><div class="desc">Your services, mapped as you ship.</div><div class="yr">2024</div></div>
+      <div class="item"><div class="ttl">Quiet</div><div class="desc">Focus without the noise of streaks.</div><div class="yr">2023</div></div>
+    </section>
+
+    <footer class="ha-foot">
+      <!-- EDIT: contact -->
+      <div class="q">“The empty space is not empty. It is full of possibility.”</div>
+      <a href="mailto:geoff@geoffhopkins.com">geoff@geoffhopkins.com</a>
+      <div class="links">
+        <a href="#">Twitter</a><a href="#">GitHub</a><a href="#">LinkedIn</a>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<!-- ===================== VIEW 3 · EDITORIAL ===================== -->
+<section class="view view--editorial">
+  <div class="ed-wrap">
+    <header class="ed-mast">
+      <!-- EDIT: name -->
+      <div class="name">Geoff Hopkins</div>
+      <div class="issue">Vol. I · No. 04<br><b>Portfolio Edition</b></div>
+    </header>
+
+    <section class="ed-hero">
+      <div class="tag">The Practice</div>
+      <!-- EDIT: headline -->
+      <h1>Building software that earns its <em>simplicity.</em></h1>
+      <p class="deck">An engineer and designer working at the intersection of craft, constraint, and the things people actually need.</p>
+    </section>
+
+    <section class="ed-cols">
+      <div class="kicker">About — In His Own Words</div>
+      <!-- EDIT: bio -->
+      <p>For the better part of a decade I have worked where engineering meets design: the narrow seam where a clear idea either survives its collision with real constraints or quietly comes apart. The discipline I trust most is subtraction — building the smallest honest version of a thing, then sharpening it until nothing extra remains.</p>
+      <p>That instinct has carried across developer tooling, fintech infrastructure, and consumer products. The surfaces look different; the method does not. Fewer moving parts. Sharper defaults. Interfaces that explain themselves without a manual.</p>
+      <p>I care about the unglamorous middle of a project — the part after the demo and before the launch, where most of the real decisions get made. That is where good products are won or lost, and it is the part I enjoy the most.</p>
+    </section>
+
+    <section class="ed-pull">
+      <!-- EDIT: pull quote -->
+      <blockquote>“The best interface is the one you <span>never have to think about.</span>”</blockquote>
+    </section>
+
+    <section class="ed-work">
+      <h2>Selected Work</h2>
+      <!-- EDIT: projects -->
+      <div class="row"><span class="no">01</span><span class="ttl">Ledger<small>Real-time reconciliation for small finance teams.</small></span><span class="yr">2025</span></div>
+      <div class="row"><span class="no">02</span><span class="ttl">Atlas<small>A CLI and dashboard that maps service dependencies as you deploy.</small></span><span class="yr">2024</span></div>
+      <div class="row"><span class="no">03</span><span class="ttl">Quiet<small>A focus app with no streaks, no badges, no guilt.</small></span><span class="yr">2023</span></div>
+    </section>
+
+    <footer class="ed-foot">
+      <!-- EDIT: contact -->
+      <p>Let's make something worth printing.</p>
+      <div style="font-family:'Newsreader',serif;font-size:22px;margin-bottom:24px"><a href="mailto:geoff@geoffhopkins.com">geoff@geoffhopkins.com</a></div>
+      <div class="links"><a href="#">Twitter</a>·<a href="#">GitHub</a>·<a href="#">LinkedIn</a></div>
+    </footer>
+  </div>
+</section>
+
+<!-- ===================== VIEW 4 · CYBER ===================== -->
+<section class="view view--cyber">
+  <div class="cy-wrap">
+    <div class="cy-top">
+      <span><span class="dot"></span>GEOFF HOPKINS — <b>SYSTEMS ONLINE</b></span>
+      <span>LDN · 51.50°N</span>
+    </div>
+
+    <header class="cy-hero">
+      <div class="tag">engineer / builder</div>
+      <!-- EDIT: headline -->
+      <h1>Ship the <span class="glow">future,</span><br>quietly.</h1>
+      <p class="sub">I design and build software at the seam of engineering and design — developer tooling, fintech rails, and consumer products that feel inevitable once they exist.</p>
+      <div class="stats">
+        <!-- EDIT: stats -->
+        <div class="s"><div class="n">10+</div><div class="l">Years building</div></div>
+        <div class="s"><div class="n">3</div><div class="l">Products shipped</div></div>
+        <div class="s"><div class="n">∞</div><div class="l">Things to fix</div></div>
+      </div>
+    </header>
+
+    <section class="cy-sec cy-about">
+      <div class="head"><b>01</b> // about</div>
+      <!-- EDIT: bio -->
+      <p>The work that interests me lives in the unglamorous middle of a project — after the demo, before the launch, where the real decisions get made. I build the smallest honest version first, then sharpen until nothing extra remains.</p>
+      <p>Across every domain the method holds: fewer moving parts, sharper defaults, interfaces that explain themselves.</p>
+    </section>
+
+    <section class="cy-sec">
+      <div class="head"><b>02</b> // selected work</div>
+      <div class="cy-work">
+        <!-- EDIT: projects -->
+        <div class="card"><div class="no">PRJ_01</div><div class="ttl">Ledger</div><div class="desc">Real-time reconciliation engine for small finance teams.</div><div class="yr">2025</div></div>
+        <div class="card"><div class="no">PRJ_02</div><div class="ttl">Atlas</div><div class="desc">CLI + dashboard mapping service dependencies as you deploy.</div><div class="yr">2024</div></div>
+        <div class="card"><div class="no">PRJ_03</div><div class="ttl">Quiet</div><div class="desc">A focus app with no streaks, no badges, no guilt.</div><div class="yr">2023</div></div>
+      </div>
+    </section>
+
+    <footer class="cy-foot">
+      <!-- EDIT: contact -->
+      <div class="big">Let's build something.<br><a href="mailto:geoff@geoffhopkins.com">geoff@geoffhopkins.com</a></div>
+      <div class="links"><a href="#">[ twitter ]</a><a href="#">[ github ]</a><a href="#">[ linkedin ]</a></div>
+    </footer>
+  </div>
+</section>
+
+<!-- ===================== PLACEHOLDER NOTE ===================== -->
+<div class="ph-note" id="phNote">
+  <button aria-label="Dismiss" onclick="document.getElementById('phNote').classList.add('hidden')">×</button>
+  <b>Placeholder content.</b> Couldn't reach geoffhopkins.com — swap the real copy where the source says <b>EDIT:</b>.
+</div>
+
+<script>
+(function () {
+  var VIEWS = ['swiss', 'hara', 'editorial', 'cyber'];
+  var body = document.body;
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.switcher button'));
+
+  function setView(v) {
+    if (VIEWS.indexOf(v) === -1) return;
+    body.setAttribute('data-view', v);
+    buttons.forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-go') === v ? 'true' : 'false');
+    });
+    try { localStorage.setItem('gh-showcase-view', v); } catch (e) {}
+    window.scrollTo({ top: 0, behavior: 'instant' in document.documentElement.style ? 'instant' : 'auto' });
+  }
+
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { setView(b.getAttribute('data-go')); });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target.matches('input, textarea')) return;
+    var i = parseInt(e.key, 10);
+    if (i >= 1 && i <= VIEWS.length) setView(VIEWS[i - 1]);
+  });
+
+  var saved;
+  try { saved = localStorage.getItem('gh-showcase-view'); } catch (e) {}
+  setView(saved || 'swiss');
+})();
+</script>
+</body>
+</html>
